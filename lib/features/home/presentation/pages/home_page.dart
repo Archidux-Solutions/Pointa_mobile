@@ -18,6 +18,8 @@ class HomePage extends ConsumerWidget {
       authControllerProvider.select((state) => state.session),
     );
     final summaryAsync = ref.watch(attendanceSummaryProvider);
+    final pendingSyncAsync = ref.watch(attendancePendingSyncCountProvider);
+    final isSyncing = ref.watch(attendanceSyncingProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -50,6 +52,63 @@ class HomePage extends ConsumerWidget {
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppCard(
+            child: pendingSyncAsync.when(
+              loading: () => const AppLoadingState(
+                message: 'Chargement de l etat de synchronisation...',
+                asCard: false,
+              ),
+              error: (_, _) => AppErrorState(
+                title: 'Etat sync indisponible',
+                message: 'Impossible de lire les actions en attente.',
+                asCard: false,
+                onRetry: () =>
+                    ref.invalidate(attendancePendingSyncCountProvider),
+              ),
+              data: (pendingCount) {
+                if (pendingCount == 0) {
+                  return Text(
+                    'Synchronisation: a jour.',
+                    style: theme.textTheme.bodyMedium,
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Synchronisation requise',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '$pendingCount action(s) en attente de reprise sync.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppPrimaryButton(
+                      label: 'Synchroniser maintenant',
+                      icon: Icons.sync,
+                      isLoading: isSyncing,
+                      onPressed: () async {
+                        final synced = await retryPendingAttendanceSync(ref);
+                        if (!context.mounted) {
+                          return;
+                        }
+                        final message = synced == 0
+                            ? 'Aucune action a synchroniser.'
+                            : '$synced action(s) synchronisee(s).';
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(message)));
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: AppSpacing.md),

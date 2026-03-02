@@ -26,13 +26,14 @@ class AttendanceRecordTile extends StatelessWidget {
     final isCheckIn = record.actionType == AttendanceActionType.checkIn;
     final icon = isCheckIn ? Icons.login : Icons.logout;
     final label = isCheckIn ? 'Arrivee' : 'Depart';
+    final syncSuffix = record.isPendingSync ? ' - Sync en attente' : '';
 
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: CircleAvatar(child: Icon(icon, size: 18)),
       title: Text('$label - ${record.siteLabel}'),
       subtitle: Text(
-        '${_formatDate(record.timestamp)} a ${_formatTime(record.timestamp)}',
+        '${_formatDate(record.timestamp)} a ${_formatTime(record.timestamp)}$syncSuffix',
       ),
       trailing: const Padding(
         padding: EdgeInsets.only(left: AppSpacing.sm),

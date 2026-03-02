@@ -6,10 +6,12 @@ class AttendanceRecord {
     required this.actionType,
     required this.timestamp,
     required this.siteLabel,
+    this.isPendingSync = false,
   });
 
   final String id;
   final AttendanceActionType actionType;
   final DateTime timestamp;
   final String siteLabel;
+  final bool isPendingSync;
 }

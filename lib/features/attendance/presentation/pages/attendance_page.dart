@@ -38,9 +38,12 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
       final action = record.actionType == AttendanceActionType.checkIn
           ? 'arrivee enregistree'
           : 'depart enregistre';
+      final message = record.isPendingSync
+          ? 'Pointage local enregistre (sync en attente).'
+          : 'Pointage reussi: $action';
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Pointage mock: $action')));
+      ).showSnackBar(SnackBar(content: Text(message)));
     } catch (_) {
       if (!mounted) {
         return;
@@ -61,11 +64,35 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
     return '$h:$m';
   }
 
+  Future<void> _retrySyncNow() async {
+    if (ref.read(attendanceSyncingProvider)) {
+      return;
+    }
+
+    final synced = await retryPendingAttendanceSync(ref);
+    if (!mounted) {
+      return;
+    }
+
+    if (synced == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Aucune action a synchroniser.')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('$synced action(s) synchronisee(s).')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final statusAsync = ref.watch(attendanceStatusProvider);
     final historyAsync = ref.watch(attendanceHistoryProvider);
+    final pendingSyncAsync = ref.watch(attendancePendingSyncCountProvider);
+    final isSyncing = ref.watch(attendanceSyncingProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -128,6 +155,52 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
           ),
           const SizedBox(height: AppSpacing.md),
           AppCard(
+            child: pendingSyncAsync.when(
+              loading: () => const AppLoadingState(
+                message: 'Chargement de l etat de synchronisation...',
+                asCard: false,
+              ),
+              error: (_, _) => AppErrorState(
+                title: 'Synchronisation indisponible',
+                message: 'Impossible de lire les actions en attente.',
+                asCard: false,
+                onRetry: () =>
+                    ref.invalidate(attendancePendingSyncCountProvider),
+              ),
+              data: (pendingCount) {
+                if (pendingCount == 0) {
+                  return Text(
+                    'Synchronisation: aucune action en attente.',
+                    style: theme.textTheme.bodyMedium,
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      '$pendingCount action(s) en attente de synchronisation.',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Les actions ont ete enregistrees localement. Lancez la reprise pour les envoyer au backend.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppPrimaryButton(
+                      label: 'Synchroniser maintenant',
+                      icon: Icons.sync,
+                      isLoading: isSyncing,
+                      onPressed: _retrySyncNow,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppCard(
             child: historyAsync.when(
               loading: () => const AppLoadingState(
                 message: 'Chargement des dernieres actions...',
@@ -162,10 +235,13 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
                           record.actionType == AttendanceActionType.checkIn
                           ? 'Arrivee'
                           : 'Depart';
+                      final syncSuffix = record.isPendingSync
+                          ? ' (sync en attente)'
+                          : '';
                       return Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                         child: Text(
-                          '$label - ${record.siteLabel} - ${_formatTime(record.timestamp)}',
+                          '$label - ${record.siteLabel}$syncSuffix - ${_formatTime(record.timestamp)}',
                           style: theme.textTheme.bodyMedium,
                         ),
                       );

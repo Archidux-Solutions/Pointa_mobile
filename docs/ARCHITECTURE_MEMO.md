@@ -67,12 +67,14 @@ lib/
       presentation/widgets/attendance_record_tile.dart
       presentation/widgets/summary_metric_card.dart
       domain/models/attendance_record.dart
+      domain/models/pending_attendance_action.dart
       domain/models/attendance_status.dart
       domain/models/attendance_summary.dart
       domain/repositories/attendance_repository.dart
       data/datasources/attendance_local_data_source.dart
       data/datasources/attendance_mock_data_source.dart
       data/datasources/attendance_remote_data_source.dart
+      data/datasources/attendance_sync_queue_data_source.dart
       data/repositories/attendance_repository_impl.dart
 ```
 
@@ -179,6 +181,37 @@ Principe de retry:
 - apres une action de pointage, `refreshAttendanceReadModels(ref)` rafraichit statut, historique et recap
 - cette approche permet de tester les ecrans en mode mock sans attendre les endpoints backend
 
+## 8.3) File offline et reprise sync (MOB-S2-05)
+
+Objectif:
+
+- ne pas bloquer le pointage mobile si le backend est indisponible
+- conserver une trace locale des actions utilisateur
+- permettre une reprise manuelle de synchronisation
+
+Composants cle:
+
+- `pending_attendance_action.dart`: modele d'action en attente de sync
+- `attendance_sync_queue_data_source.dart`: queue locale en memoire
+- `attendance_record.isPendingSync`: marque les pointages non synchronises
+- `attendanceRepository.retryPendingSync()`: rejeu des actions en attente
+
+Comportement:
+
+- en mode `remote`, si `sendToggle(...)` echoue:
+  - l'action est enregistree localement avec `isPendingSync=true`
+  - une entree est ajoutee dans la queue
+- au `retry`:
+  - les actions en attente sont rejouees dans l'ordre chronologique
+  - chaque action synchronisee remplace son enregistrement local "pending"
+  - la queue diminue jusqu'a retour a zero
+
+Exposition UI (Riverpod):
+
+- `attendancePendingSyncCountProvider`: nombre d'actions en attente
+- `attendanceSyncingProvider`: etat de synchronisation en cours
+- `retryPendingAttendanceSync(ref)`: action de reprise + refresh global des providers
+
 ## 9) Regles de travail sur cette base
 
 - toute nouvelle feature suit `presentation/application/domain/data`
@@ -200,4 +233,5 @@ Principe de retry:
 - `lib/features/auth/data/repositories/mock_auth_repository.dart`
 - `lib/features/auth/presentation/pages/login_page.dart`
 - `lib/features/attendance/application/attendance_providers.dart`
+- `lib/features/attendance/data/datasources/attendance_sync_queue_data_source.dart`
 - `lib/features/attendance/data/repositories/attendance_repository_impl.dart`

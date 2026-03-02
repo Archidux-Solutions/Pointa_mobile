@@ -10,4 +10,8 @@ abstract class AttendanceRepository {
   Future<AttendanceSummary> getSummary();
 
   Future<AttendanceRecord> toggleAttendance();
+
+  Future<int> getPendingSyncCount();
+
+  Future<int> retryPendingSync();
 }

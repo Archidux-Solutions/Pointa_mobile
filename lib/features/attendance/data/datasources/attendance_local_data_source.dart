@@ -17,4 +17,16 @@ class AttendanceLocalDataSource {
   void addRecord(AttendanceRecord record) {
     _records.insert(0, record);
   }
+
+  void replaceRecordById({
+    required String id,
+    required AttendanceRecord record,
+  }) {
+    final index = _records.indexWhere((entry) => entry.id == id);
+    if (index == -1) {
+      _records.insert(0, record);
+      return;
+    }
+    _records[index] = record;
+  }
 }
