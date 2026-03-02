@@ -17,7 +17,7 @@ main.dart
   -> PointaApp
       -> MaterialApp.router
           -> appRouterProvider (go_router)
-              -> LoginPage / HomePage / AttendancePage / HistoryPage
+              -> LoginPage / HomePage / AttendancePage / HistoryPage / SummaryPage
 
 LoginPage
   -> AuthController (Riverpod Notifier)
@@ -62,7 +62,9 @@ lib/
       application/attendance_providers.dart
       presentation/pages/attendance_page.dart
       presentation/pages/history_page.dart
+      presentation/pages/summary_page.dart
       presentation/widgets/attendance_record_tile.dart
+      presentation/widgets/summary_metric_card.dart
       domain/models/attendance_record.dart
       domain/models/attendance_status.dart
       domain/models/attendance_summary.dart
@@ -93,7 +95,7 @@ Fichier: `lib/app/router/app_router.dart`
 
 Ce que `go_router` gere ici:
 
-- declaration des routes (`/login`, `/home`, `/attendance`, `/attendance/history`)
+- declaration des routes (`/login`, `/home`, `/attendance`, `/attendance/history`, `/attendance/summary`)
 - route initiale (`/login`)
 - guard d'authentification:
   - non connecte + route protegee -> redirection vers `/login`
@@ -159,6 +161,7 @@ Principe:
 - le repository choisit la source selon `dataModeProvider`
 - quand le backend est pret, on remplace la logique `remote` sans casser les pages
 - les ecrans `AttendancePage` et `HistoryPage` lisent la meme source d'historique
+- l'ecran `SummaryPage` consomme `attendanceSummaryProvider` pour le recap metier
 
 ## 9) Regles de travail sur cette base
 

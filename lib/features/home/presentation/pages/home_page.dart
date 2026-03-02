@@ -100,6 +100,12 @@ class HomePage extends ConsumerWidget {
                   icon: const Icon(Icons.history),
                   label: const Text('Voir historique'),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton.icon(
+                  onPressed: () => context.go(AppRoutes.summary),
+                  icon: const Icon(Icons.query_stats),
+                  label: const Text('Voir recap'),
+                ),
               ],
             ),
           ),
