@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
+import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/presentation/widgets/summary_metric_card.dart';
@@ -27,12 +28,12 @@ class SummaryPage extends ConsumerWidget {
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: summaryAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => AppCard(
-            child: Text(
-              'Impossible de charger le recapitulatif.',
-              style: theme.textTheme.bodyMedium,
-            ),
+          loading: () =>
+              const AppLoadingState(message: 'Chargement du recapitulatif...'),
+          error: (_, _) => AppErrorState(
+            title: 'Recapitulatif indisponible',
+            message: 'Impossible de charger le recapitulatif.',
+            onRetry: () => ref.invalidate(attendanceSummaryProvider),
           ),
           data: (summary) {
             final hours = summary.workedMinutes ~/ 60;
@@ -61,22 +62,20 @@ class SummaryPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 historyAsync.when(
-                  loading: () => const AppCard(
-                    child: Center(child: CircularProgressIndicator()),
+                  loading: () => const AppLoadingState(
+                    message: 'Chargement de l historique...',
                   ),
-                  error: (_, _) => AppCard(
-                    child: Text(
-                      'Historique indisponible.',
-                      style: theme.textTheme.bodyMedium,
-                    ),
+                  error: (_, _) => AppErrorState(
+                    title: 'Historique indisponible',
+                    message: 'Impossible de recuperer les donnees detaillees.',
+                    onRetry: () => ref.invalidate(attendanceHistoryProvider),
                   ),
                   data: (history) {
                     if (history.isEmpty) {
-                      return AppCard(
-                        child: Text(
-                          'Aucune donnee de pointage pour etablir un recap detaille.',
-                          style: theme.textTheme.bodyMedium,
-                        ),
+                      return const AppEmptyState(
+                        title: 'Aucune donnee de pointage',
+                        message:
+                            'Le recap detaille apparaitra apres les premieres actions.',
                       );
                     }
                     return AppCard(

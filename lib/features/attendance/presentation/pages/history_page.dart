@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
+import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/presentation/widgets/attendance_record_tile.dart';
@@ -12,7 +13,6 @@ class HistoryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final historyAsync = ref.watch(attendanceHistoryProvider);
 
     return Scaffold(
@@ -26,40 +26,20 @@ class HistoryPage extends ConsumerWidget {
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: historyAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Erreur de chargement',
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Impossible de recuperer l historique. Reessayez dans quelques instants.',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
+          loading: () =>
+              const AppLoadingState(message: 'Chargement de l historique...'),
+          error: (_, _) => AppErrorState(
+            title: 'Erreur de chargement',
+            message:
+                'Impossible de recuperer l historique. Reessayez dans quelques instants.',
+            onRetry: () => ref.invalidate(attendanceHistoryProvider),
+            retryButtonKey: const Key('history_retry_button'),
           ),
           data: (history) {
             if (history.isEmpty) {
-              return AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      'Aucune presence enregistree',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Les actions de pointage apparaitront ici.',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+              return const AppEmptyState(
+                title: 'Aucune presence enregistree',
+                message: 'Les actions de pointage apparaitront ici.',
               );
             }
 

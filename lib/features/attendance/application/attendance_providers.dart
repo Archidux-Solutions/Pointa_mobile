@@ -53,3 +53,9 @@ final attendanceSummaryProvider = FutureProvider<AttendanceSummary>((
 final attendanceStatusProvider = FutureProvider<AttendanceStatus>((ref) async {
   return ref.watch(attendanceRepositoryProvider).getCurrentStatus();
 });
+
+void refreshAttendanceReadModels(WidgetRef ref) {
+  ref.invalidate(attendanceStatusProvider);
+  ref.invalidate(attendanceHistoryProvider);
+  ref.invalidate(attendanceSummaryProvider);
+}

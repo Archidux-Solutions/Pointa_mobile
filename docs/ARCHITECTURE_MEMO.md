@@ -1,4 +1,4 @@
-# Pointa Mobile - Memo Architecture (S1)
+# Pointa Mobile - Memo Architecture (S1-S2)
 
 ## 1) But de ce memo
 
@@ -44,6 +44,7 @@ lib/
       app_spacing.dart
       app_typography.dart
     widgets/
+      app_async_state.dart
       app_card.dart
       app_primary_button.dart
       app_text_field.dart
@@ -82,7 +83,7 @@ lib/
 - `app/router/`: declaration des routes et regles de redirection.
 - `core/`: briques transverses (theme, spacing, outils partages).
 - `core/theme/`: tokens visuels globaux (couleurs, rayons, typo, theme Flutter).
-- `core/widgets/`: composants UI reutilisables (carte, bouton, champ texte).
+- `core/widgets/`: composants UI reutilisables (carte, bouton, champ texte, etats async).
 - `core/config/`: configuration transversale (ex: mode de source de donnees).
 - `features/<feature>/presentation`: ecrans/widgets UI.
 - `features/<feature>/application`: logique d'etat et cas d'usage.
@@ -154,6 +155,7 @@ Providers Riverpod cle:
 - `attendanceHistoryProvider`
 - `attendanceSummaryProvider`
 - `attendanceStatusProvider`
+- `refreshAttendanceReadModels(...)` (helper de refresh global)
 
 Principe:
 
@@ -162,6 +164,20 @@ Principe:
 - quand le backend est pret, on remplace la logique `remote` sans casser les pages
 - les ecrans `AttendancePage` et `HistoryPage` lisent la meme source d'historique
 - l'ecran `SummaryPage` consomme `attendanceSummaryProvider` pour le recap metier
+
+## 8.2) Strategie UI des etats async (MOB-S2-04)
+
+Les etats asynchrones sont unifies via `core/widgets/app_async_state.dart`:
+
+- `AppLoadingState`: chargement standardise
+- `AppErrorState`: message d'erreur + bouton `Reessayer`
+- `AppEmptyState`: etat vide avec message explicite
+
+Principe de retry:
+
+- chaque ecran invalide le provider concerne via `ref.invalidate(...)`
+- apres une action de pointage, `refreshAttendanceReadModels(ref)` rafraichit statut, historique et recap
+- cette approche permet de tester les ecrans en mode mock sans attendre les endpoints backend
 
 ## 9) Regles de travail sur cette base
 
@@ -178,6 +194,7 @@ Principe:
 - `lib/app/pointa_app.dart`
 - `lib/app/router/app_router.dart`
 - `lib/core/theme/app_theme.dart`
+- `lib/core/widgets/app_async_state.dart`
 - `lib/core/widgets/app_primary_button.dart`
 - `lib/features/auth/application/auth_controller.dart`
 - `lib/features/auth/data/repositories/mock_auth_repository.dart`

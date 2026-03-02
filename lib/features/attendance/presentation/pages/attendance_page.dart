@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
+import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/core/widgets/app_primary_button.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
@@ -28,9 +29,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
       final record = await ref
           .read(attendanceRepositoryProvider)
           .toggleAttendance();
-      ref.invalidate(attendanceStatusProvider);
-      ref.invalidate(attendanceHistoryProvider);
-      ref.invalidate(attendanceSummaryProvider);
+      refreshAttendanceReadModels(ref);
 
       if (!mounted) {
         return;
@@ -80,14 +79,13 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
         padding: const EdgeInsets.all(AppSpacing.md),
         children: <Widget>[
           statusAsync.when(
-            loading: () => const AppCard(
-              child: Center(child: CircularProgressIndicator()),
+            loading: () => const AppLoadingState(
+              message: 'Chargement du statut de pointage...',
             ),
-            error: (_, _) => AppCard(
-              child: Text(
-                'Impossible de charger le statut de pointage.',
-                style: theme.textTheme.bodyMedium,
-              ),
+            error: (_, _) => AppErrorState(
+              title: 'Statut indisponible',
+              message: 'Impossible de charger le statut de pointage.',
+              onRetry: () => ref.invalidate(attendanceStatusProvider),
             ),
             data: (status) {
               final statusText = status.isCheckedIn
@@ -131,16 +129,22 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
           const SizedBox(height: AppSpacing.md),
           AppCard(
             child: historyAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => Text(
-                'Historique indisponible pour le moment.',
-                style: theme.textTheme.bodyMedium,
+              loading: () => const AppLoadingState(
+                message: 'Chargement des dernieres actions...',
+                asCard: false,
+              ),
+              error: (_, _) => AppErrorState(
+                title: 'Historique indisponible',
+                message: 'Impossible de charger les dernieres actions.',
+                asCard: false,
+                onRetry: () => ref.invalidate(attendanceHistoryProvider),
               ),
               data: (history) {
                 if (history.isEmpty) {
-                  return Text(
-                    'Aucune action de pointage enregistree.',
-                    style: theme.textTheme.bodyMedium,
+                  return const AppEmptyState(
+                    title: 'Aucune action de pointage',
+                    message: 'Les prochaines actions apparaitront ici.',
+                    asCard: false,
                   );
                 }
 

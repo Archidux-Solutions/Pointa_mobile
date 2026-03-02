@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
+import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/core/widgets/app_primary_button.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
@@ -54,10 +55,15 @@ class HomePage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           AppCard(
             child: summaryAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, _) => Text(
-                'Indicateurs indisponibles.',
-                style: theme.textTheme.bodyMedium,
+              loading: () => const AppLoadingState(
+                message: 'Chargement des indicateurs...',
+                asCard: false,
+              ),
+              error: (_, _) => AppErrorState(
+                title: 'Indicateurs indisponibles',
+                message: 'Impossible de charger le resume du jour.',
+                asCard: false,
+                onRetry: () => ref.invalidate(attendanceSummaryProvider),
               ),
               data: (summary) {
                 final hours = summary.workedMinutes ~/ 60;
