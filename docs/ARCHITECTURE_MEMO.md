@@ -35,6 +35,8 @@ lib/
     router/
       app_router.dart
   core/
+    config/
+      data_mode.dart
     theme/
       app_colors.dart
       app_radius.dart
@@ -57,7 +59,16 @@ lib/
     home/
       presentation/pages/home_page.dart
     attendance/
+      application/attendance_providers.dart
       presentation/pages/attendance_page.dart
+      domain/models/attendance_record.dart
+      domain/models/attendance_status.dart
+      domain/models/attendance_summary.dart
+      domain/repositories/attendance_repository.dart
+      data/datasources/attendance_local_data_source.dart
+      data/datasources/attendance_mock_data_source.dart
+      data/datasources/attendance_remote_data_source.dart
+      data/repositories/attendance_repository_impl.dart
 ```
 
 ## 4) Role de chaque dossier cle
@@ -68,6 +79,7 @@ lib/
 - `core/`: briques transverses (theme, spacing, outils partages).
 - `core/theme/`: tokens visuels globaux (couleurs, rayons, typo, theme Flutter).
 - `core/widgets/`: composants UI reutilisables (carte, bouton, champ texte).
+- `core/config/`: configuration transversale (ex: mode de source de donnees).
 - `features/<feature>/presentation`: ecrans/widgets UI.
 - `features/<feature>/application`: logique d'etat et cas d'usage.
 - `features/<feature>/domain`: contrats metier (interfaces/modeles).
@@ -124,6 +136,27 @@ Le reste reste stable:
 - `AuthController` garde le meme usage
 - `go_router` continue de se baser sur `AuthState.status`
 
+## 8.1) Strategie de donnees attendance (MOB-S2-01)
+
+La feature attendance suit une abstraction source de donnees unique:
+
+- `DataMode.mock`: donnees simulees pour avancer sans backend
+- `DataMode.local`: donnees locales (cache/memoire)
+- `DataMode.remote`: branchement backend Django (placeholder deja present)
+
+Providers Riverpod cle:
+
+- `attendanceRepositoryProvider`
+- `attendanceHistoryProvider`
+- `attendanceSummaryProvider`
+- `attendanceStatusProvider`
+
+Principe:
+
+- l'UI consomme les providers
+- le repository choisit la source selon `dataModeProvider`
+- quand le backend est pret, on remplace la logique `remote` sans casser les pages
+
 ## 9) Regles de travail sur cette base
 
 - toute nouvelle feature suit `presentation/application/domain/data`
@@ -143,3 +176,5 @@ Le reste reste stable:
 - `lib/features/auth/application/auth_controller.dart`
 - `lib/features/auth/data/repositories/mock_auth_repository.dart`
 - `lib/features/auth/presentation/pages/login_page.dart`
+- `lib/features/attendance/application/attendance_providers.dart`
+- `lib/features/attendance/data/repositories/attendance_repository_impl.dart`

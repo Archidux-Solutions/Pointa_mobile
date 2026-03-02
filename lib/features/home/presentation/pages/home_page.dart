@@ -5,6 +5,7 @@ import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/core/widgets/app_primary_button.dart';
+import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 
 class HomePage extends ConsumerWidget {
@@ -15,6 +16,7 @@ class HomePage extends ConsumerWidget {
     final session = ref.watch(
       authControllerProvider.select((state) => state.session),
     );
+    final summaryAsync = ref.watch(attendanceSummaryProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -47,6 +49,37 @@ class HomePage extends ConsumerWidget {
                   style: theme.textTheme.bodyMedium,
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          AppCard(
+            child: summaryAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => Text(
+                'Indicateurs indisponibles.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              data: (summary) {
+                final hours = summary.workedMinutes ~/ 60;
+                final minutes = summary.workedMinutes % 60;
+                final worked = '$hours h ${minutes.toString().padLeft(2, '0')}';
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text('Resume du jour', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Temps travaille: $worked',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    Text(
+                      'Retards: ${summary.lateCount} | Absences: ${summary.absenceCount}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           const SizedBox(height: AppSpacing.md),

@@ -1,31 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/core/widgets/app_primary_button.dart';
+import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
+import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 
-class AttendancePage extends StatefulWidget {
+class AttendancePage extends ConsumerStatefulWidget {
   const AttendancePage({super.key});
 
   @override
-  State<AttendancePage> createState() => _AttendancePageState();
+  ConsumerState<AttendancePage> createState() => _AttendancePageState();
 }
 
-class _AttendancePageState extends State<AttendancePage> {
-  bool _isCheckedIn = false;
-  DateTime? _lastActionAt;
+class _AttendancePageState extends ConsumerState<AttendancePage> {
+  bool _isSubmitting = false;
 
-  void _toggleAttendance() {
-    setState(() {
-      _isCheckedIn = !_isCheckedIn;
-      _lastActionAt = DateTime.now();
-    });
+  Future<void> _toggleAttendance() async {
+    if (_isSubmitting) {
+      return;
+    }
 
-    final action = _isCheckedIn ? 'arrivee enregistree' : 'depart enregistre';
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Pointage mock: $action')));
+    setState(() => _isSubmitting = true);
+    try {
+      final record = await ref
+          .read(attendanceRepositoryProvider)
+          .toggleAttendance();
+      ref.invalidate(attendanceStatusProvider);
+      ref.invalidate(attendanceHistoryProvider);
+      ref.invalidate(attendanceSummaryProvider);
+
+      if (!mounted) {
+        return;
+      }
+
+      final action = record.actionType == AttendanceActionType.checkIn
+          ? 'arrivee enregistree'
+          : 'depart enregistre';
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Pointage mock: $action')));
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Action impossible, reessayez.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   String _formatTime(DateTime dateTime) {
@@ -37,8 +65,8 @@ class _AttendancePageState extends State<AttendancePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusText = _isCheckedIn ? 'En service' : 'Hors service';
-    final actionText = _isCheckedIn ? 'Pointer depart' : 'Pointer arrivee';
+    final statusAsync = ref.watch(attendanceStatusProvider);
+    final historyAsync = ref.watch(attendanceHistoryProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -51,39 +79,96 @@ class _AttendancePageState extends State<AttendancePage> {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: <Widget>[
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Etat actuel: $statusText',
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'Zone GPS (mock): Siege Ouaga - Rayon 60m',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  _lastActionAt == null
-                      ? 'Aucun pointage aujourd hui.'
-                      : 'Derniere action a ${_formatTime(_lastActionAt!)}',
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                AppPrimaryButton(
-                  label: actionText,
-                  onPressed: () async => _toggleAttendance(),
-                ),
-              ],
+          statusAsync.when(
+            loading: () => const AppCard(
+              child: Center(child: CircularProgressIndicator()),
             ),
+            error: (_, _) => AppCard(
+              child: Text(
+                'Impossible de charger le statut de pointage.',
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            data: (status) {
+              final statusText = status.isCheckedIn
+                  ? 'En service'
+                  : 'Hors service';
+              final actionText = status.isCheckedIn
+                  ? 'Pointer depart'
+                  : 'Pointer arrivee';
+
+              return AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Etat actuel: $statusText',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Zone GPS (mock): Siege Ouaga - Rayon 60m',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      status.lastActionAt == null
+                          ? 'Aucun pointage aujourd hui.'
+                          : 'Derniere action a ${_formatTime(status.lastActionAt!)}',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    AppPrimaryButton(
+                      label: actionText,
+                      isLoading: _isSubmitting,
+                      onPressed: _toggleAttendance,
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
           const SizedBox(height: AppSpacing.md),
           AppCard(
-            child: Text(
-              'Mode mock actif: ce flow est testable sans endpoint backend.',
-              style: theme.textTheme.bodyMedium,
+            child: historyAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, _) => Text(
+                'Historique indisponible pour le moment.',
+                style: theme.textTheme.bodyMedium,
+              ),
+              data: (history) {
+                if (history.isEmpty) {
+                  return Text(
+                    'Aucune action de pointage enregistree.',
+                    style: theme.textTheme.bodyMedium,
+                  );
+                }
+
+                final topRecords = history.take(3).toList();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Dernieres actions',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    ...topRecords.map((record) {
+                      final label =
+                          record.actionType == AttendanceActionType.checkIn
+                          ? 'Arrivee'
+                          : 'Depart';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                        child: Text(
+                          '$label - ${record.siteLabel} - ${_formatTime(record.timestamp)}',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      );
+                    }),
+                  ],
+                );
+              },
             ),
           ),
         ],
