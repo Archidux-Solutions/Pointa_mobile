@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/features/attendance/presentation/pages/attendance_page.dart';
+import 'package:pointa_mobile/features/attendance/presentation/pages/history_page.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/application/auth_state.dart';
 import 'package:pointa_mobile/features/auth/presentation/pages/login_page.dart';
@@ -10,6 +11,7 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const home = '/home';
   static const attendance = '/attendance';
+  static const history = '/attendance/history';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -31,6 +33,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.attendance,
         builder: (context, state) => const AttendancePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.history,
+        builder: (context, state) => const HistoryPage(),
       ),
     ],
     redirect: (context, state) {

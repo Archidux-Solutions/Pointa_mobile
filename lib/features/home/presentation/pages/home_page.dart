@@ -96,9 +96,9 @@ class HomePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 OutlinedButton.icon(
-                  onPressed: () {},
+                  onPressed: () => context.go(AppRoutes.history),
                   icon: const Icon(Icons.history),
-                  label: const Text('Historique (prochaine etape)'),
+                  label: const Text('Voir historique'),
                 ),
               ],
             ),
