@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pointa Mobile V4B</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root{
+      --bg:#f1f7ff;
+      --ink:#0a1630;
+      --mut:#617195;
+      --line:#d8e4ff;
+      --pri:#1f64ff;
+      --pri2:#1948d4;
+      --ok:#0da472;
+      --wa:#ee9e2f;
+      --er:#d94a63;
+      --card:#ffffff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Manrope,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(860px 400px at -8% -10%,#cbe0ff,transparent 60%),
+        radial-gradient(760px 360px at 108% 0%,#bbefe6,transparent 58%),
+        linear-gradient(180deg,#eef5ff,#f8fbff);
+      padding:28px;
+    }
+    .wrap{width:2860px;margin:0 auto;display:grid;gap:16px}
+    .sec{
+      background:rgba(255,255,255,.88);
+      border:1px solid #d7e4ff;
+      border-radius:30px;
+      padding:24px;
+      box-shadow:0 16px 40px rgba(24,56,138,.13);
+    }
+    .h1{
+      margin:0;
+      font-family:"Space Grotesk",sans-serif;
+      font-size:32px;
+      font-weight:700;
+      letter-spacing:-.02em;
+    }
+    .sub{margin:8px 0 0;color:var(--mut);font-size:14px}
+    .phones{
+      display:grid;
+      grid-template-columns:repeat(6,1fr);
+      gap:12px;
+      margin-top:14px;
+    }
+    .phone{
+      min-height:556px;
+      border:1px solid #cfdfff;
+      border-radius:34px;
+      padding:10px;
+      position:relative;
+      background:
+        radial-gradient(300px 150px at 100% -10%,rgba(31,100,255,.25),transparent 62%),
+        radial-gradient(220px 140px at 10% -10%,rgba(22,196,173,.20),transparent 65%),
+        linear-gradient(180deg,#ffffff,#f3f8ff);
+      box-shadow:0 14px 30px rgba(16,45,119,.14);
+      overflow:hidden;
+    }
+    .phone::after{
+      content:"";
+      position:absolute;
+      left:-40px;
+      bottom:-60px;
+      width:170px;
+      height:170px;
+      border-radius:999px;
+      background:linear-gradient(150deg,rgba(23,101,255,.14),rgba(22,196,173,.16));
+      pointer-events:none;
+    }
+    .seq{
+      position:absolute;right:10px;top:10px;
+      width:26px;height:26px;border-radius:999px;
+      background:linear-gradient(135deg,var(--pri),var(--pri2));
+      color:#fff;font-size:11px;font-weight:800;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .status{display:flex;justify-content:space-between;font-size:10px;color:#7a89ae;margin-bottom:10px;padding-right:30px}
+    .title{
+      font-family:"Space Grotesk",sans-serif;
+      font-size:15px;
+      font-weight:700;
+      margin-bottom:8px;
+      letter-spacing:-.01em;
+    }
+    .card{
+      background:#fff;
+      border:1px solid #d8e4ff;
+      border-radius:13px;
+      padding:10px;
+      margin-bottom:8px;
+      box-shadow:0 4px 14px rgba(20,48,116,.06);
+    }
+    .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+    .mut{font-size:11px;color:#66769b}
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      height:28px;
+      border-radius:999px;
+      padding:0 11px;
+      font-size:11px;
+      font-weight:700;
+      margin-right:6px;
+      margin-bottom:6px;
+    }
+    .ok{background:#dcf7ee;color:#0d8d61}
+    .wa{background:#fff1de;color:#b6760f}
+    .er{background:#ffe4ea;color:#c63e56}
+    .cta{
+      width:100%;
+      height:43px;
+      border:0;
+      border-radius:13px;
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      background:linear-gradient(135deg,var(--pri),var(--pri2));
+      margin-top:3px;
+    }
+    .ghost{
+      width:100%;
+      height:40px;
+      border-radius:13px;
+      border:1px solid #bfd2ff;
+      background:#fff;
+      color:#315ccd;
+      font-size:11px;
+      font-weight:700;
+      margin-top:6px;
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:7px;
+      margin-bottom:7px;
+    }
+    .k{
+      border:1px solid #d9e5ff;
+      border-radius:11px;
+      background:#fff;
+      padding:7px 5px;
+      text-align:center;
+    }
+    .k b{display:block;font-size:12px}
+    .k span{font-size:10px;color:#68789f}
+    .flow{
+      margin-top:12px;
+      display:grid;
+      grid-template-columns:1.25fr 1fr;
+      gap:10px;
+    }
+    .box{
+      background:#fff;
+      border:1px solid #d8e4ff;
+      border-radius:16px;
+      padding:12px;
+    }
+    .path{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+    }
+    .node{
+      border:1px solid #c5d7ff;
+      background:#eef4ff;
+      color:#2f53a4;
+      border-radius:999px;
+      padding:7px 10px;
+      font-size:11px;
+      font-weight:700;
+    }
+    .arr{display:flex;align-items:center;color:#8ca0ca;font-size:13px}
+    .small-grid{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+    ul{margin:8px 0 0 18px;padding:0}
+    li{margin-bottom:5px;font-size:12px;color:#66769b}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="sec">
+      <h1 class="h1">Pointa Mobile V4B - Screens 11-22 + States + Handoff</h1>
+      <p class="sub">Deuxieme partie complete: historique, recap, sync, profil, settings, erreurs, offline et notes de livraison Flutter.</p>
+
+      <div class="phones">
+        <article class="phone">
+          <div class="seq">11</div>
+          <div class="status"><span>17:10</span><span>4G</span></div>
+          <div class="title">Historique journalier</div>
+          <div class="card"><div class="row"><b>Arrivee</b><span class="mut">09:49</span></div><div class="mut">Siege Ouaga</div></div>
+          <div class="card"><div class="row"><b>Pause debut</b><span class="mut">13:01</span></div><div class="mut">Siege Ouaga</div></div>
+          <div class="card"><div class="row"><b>Depart</b><span class="mut">17:08</span></div><div class="mut">Siege Ouaga</div></div>
+          <button class="ghost">Filtrer</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">12</div>
+          <div class="status"><span>17:11</span><span>4G</span></div>
+          <div class="title">Filtre historique</div>
+          <div class="card"><b>Periode</b><div class="mut">01 Mar - 31 Mar</div></div>
+          <div class="card"><b>Site</b><div class="mut">Tous les sites</div></div>
+          <div class="card"><b>Statut</b><div class="mut">Tous</div></div>
+          <button class="cta">Appliquer filtres</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">13</div>
+          <div class="status"><span>17:12</span><span>4G</span></div>
+          <div class="title">Recap jour</div>
+          <div class="kpi">
+            <div class="k"><span>Heures</span><b>07h40</b></div>
+            <div class="k"><span>Retards</span><b>1</b></div>
+            <div class="k"><span>Absences</span><b>0</b></div>
+          </div>
+          <div class="card"><b>Objectif</b><div class="mut">8h, progression 96%</div></div>
+          <button class="ghost">Voir recap mensuel</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">14</div>
+          <div class="status"><span>17:13</span><span>4G</span></div>
+          <div class="title">Recap mensuel</div>
+          <div class="card">
+            <div class="row"><span class="mut">Heures totales</span><b>146h</b></div>
+            <div class="row"><span class="mut">Retards</span><b>4</b></div>
+            <div class="row"><span class="mut">Absences</span><b>1</b></div>
+          </div>
+          <button class="ghost">Exporter PDF</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">15</div>
+          <div class="status"><span>17:14</span><span>3G</span></div>
+          <div class="title">Sync pending</div>
+          <div class="card"><span class="chip er">2 actions en attente</span><div class="mut">Le serveur ne repond pas pour le moment.</div></div>
+          <div class="card"><b>Queue locale</b><div class="mut">Arrivee 09:49, depart 17:08.</div></div>
+          <button class="cta">Synchroniser maintenant</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">16</div>
+          <div class="status"><span>17:15</span><span>4G</span></div>
+          <div class="title">Sync success</div>
+          <div class="card"><span class="chip ok">sync complete</span><div class="mut">2 actions poussees vers backend.</div></div>
+          <button class="ghost">Retour historique</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">17</div>
+          <div class="status"><span>17:16</span><span>4G</span></div>
+          <div class="title">Notifications</div>
+          <div class="card"><b>Rappel depart</b><div class="mut">Vous n avez pas encore pointe depart.</div></div>
+          <div class="card"><b>Recap pret</b><div class="mut">Votre resume du jour est disponible.</div></div>
+          <div class="card"><b>Sync reussie</b><div class="mut">Toutes les actions sont alignees.</div></div>
+        </article>
+
+        <article class="phone">
+          <div class="seq">18</div>
+          <div class="status"><span>17:17</span><span>4G</span></div>
+          <div class="title">Profil</div>
+          <div class="card"><b>Abdoul Sinon</b><div class="mut">sinonabdoul85@gmail.com</div></div>
+          <div class="card"><b>Poste</b><div class="mut">Agent operations</div></div>
+          <button class="ghost">Modifier profil</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">19</div>
+          <div class="status"><span>17:18</span><span>4G</span></div>
+          <div class="title">Parametres</div>
+          <div class="card"><b>Langue</b><div class="mut">Francais</div></div>
+          <div class="card"><b>Aide et support</b><div class="mut">FAQ + ticket backend si bug</div></div>
+          <button class="ghost">Politique de confidentialite</button>
+          <button class="cta" style="background:linear-gradient(135deg,#ff8296,#d43f58)">Se deconnecter</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">20</div>
+          <div class="status"><span>17:19</span><span>4G</span></div>
+          <div class="title">Etat erreur + retry</div>
+          <div class="card"><span class="chip er">Erreur chargement</span><div class="mut">Impossible de recuperer les donnees.</div></div>
+          <button class="cta">Reessayer</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">21</div>
+          <div class="status"><span>17:20</span><span>2G</span></div>
+          <div class="title">Etat offline</div>
+          <div class="card"><span class="chip wa">mode offline</span><div class="mut">Action stockee localement.</div></div>
+          <div class="card"><b>Etat reseau</b><div class="mut">Reprise auto au retour de connexion.</div></div>
+          <button class="ghost">Voir queue offline</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">22</div>
+          <div class="status"><span>17:21</span><span>4G</span></div>
+          <div class="title">Loading / empty</div>
+          <div class="card"><b>Loading state</b><div class="mut">Chargement du recap en cours...</div></div>
+          <div class="card"><b>Empty state</b><div class="mut">Aucune action enregistree pour cette periode.</div></div>
+          <button class="ghost">Retour dashboard</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h1 class="h1">Prototype Map + Flutter Handoff</h1>
+      <p class="sub">Flow principal pour demo et regles de passage maquette vers code.</p>
+      <div class="flow">
+        <div class="box">
+          <b>Navigation prototype</b>
+          <div class="path">
+            <span class="node">00 Splash</span><span class="arr">-></span>
+            <span class="node">01-03 Onboarding</span><span class="arr">-></span>
+            <span class="node">04 Login</span><span class="arr">-></span>
+            <span class="node">06 Dashboard</span><span class="arr">-></span>
+            <span class="node">07 Pointage</span><span class="arr">-></span>
+            <span class="node">11 Historique</span><span class="arr">-></span>
+            <span class="node">13-14 Recap</span><span class="arr">-></span>
+            <span class="node">15-16 Sync</span><span class="arr">-></span>
+            <span class="node">18-19 Profil</span>
+          </div>
+        </div>
+        <div class="box">
+          <b>Regles Flutter</b>
+          <ul>
+            <li>Material 3 + theming via tokens centralises.</li>
+            <li>Composants partages: button, card, stat-chip, page-shell.</li>
+            <li>go_router pour routes nommees et deep links.</li>
+            <li>Riverpod pour etat async et gestion offline queue.</li>
+            <li>Tous les ecrans supportent loading/empty/error/retry.</li>
+            <li>Respect grille 8pt et touch targets 48dp minimum.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="small-grid">
+        <div class="box"><b>Token color</b><div class="mut">primary #1F64FF</div><div class="mut">success #0DA472</div><div class="mut">error #D94A63</div></div>
+        <div class="box"><b>Type scale</b><div class="mut">Display 28</div><div class="mut">Title 20/16</div><div class="mut">Body 14/12</div></div>
+        <div class="box"><b>Spacing</b><div class="mut">4, 8, 12, 16, 24, 32</div><div class="mut">Cards radius 13-16</div></div>
+        <div class="box"><b>Components</b><div class="mut">Primary CTA + Ghost CTA</div><div class="mut">Status chips + KPI cards</div></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

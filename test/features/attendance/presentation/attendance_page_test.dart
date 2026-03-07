@@ -13,6 +13,9 @@ void main() {
     testWidgets('affiche etat synchronise quand aucune action en attente', (
       WidgetTester tester,
     ) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -40,17 +43,20 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      expect(
-        find.text('Synchronisation: aucune action en attente.'),
-        findsOneWidget,
-      );
+      expect(find.text('Pointage'), findsWidgets);
+      expect(find.text('Historique du jour'), findsOneWidget);
+      expect(find.text("Pointer l'arrivee"), findsOneWidget);
       expect(find.text('Synchroniser maintenant'), findsNothing);
+      expect(find.text('Synchroniser'), findsNothing);
     });
 
     testWidgets('declenche retry sync et affiche le resultat', (
       WidgetTester tester,
     ) async {
       final repository = _RetryFakeAttendanceRepository(retryResult: 2);
+
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -79,7 +85,8 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Synchroniser maintenant'));
+      await tester.ensureVisible(find.text('Synchroniser'));
+      await tester.tap(find.text('Synchroniser'));
       await tester.pumpAndSettle();
 
       expect(repository.retryCalls, 1);
@@ -90,6 +97,9 @@ void main() {
       WidgetTester tester,
     ) async {
       final repository = _RetryFakeAttendanceRepository(retryResult: 0);
+
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
         ProviderScope(
@@ -118,7 +128,8 @@ void main() {
       );
 
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Synchroniser maintenant'));
+      await tester.ensureVisible(find.text('Synchroniser'));
+      await tester.tap(find.text('Synchroniser'));
       await tester.pumpAndSettle();
 
       expect(repository.retryCalls, 1);

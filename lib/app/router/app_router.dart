@@ -6,14 +6,18 @@ import 'package:pointa_mobile/features/attendance/presentation/pages/summary_pag
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/application/auth_state.dart';
 import 'package:pointa_mobile/features/auth/presentation/pages/login_page.dart';
+import 'package:pointa_mobile/features/auth/presentation/pages/register_page.dart';
 import 'package:pointa_mobile/features/home/presentation/pages/home_page.dart';
+import 'package:pointa_mobile/features/profile/presentation/pages/profile_page.dart';
 
 abstract final class AppRoutes {
   static const login = '/login';
+  static const register = '/register';
   static const home = '/home';
   static const attendance = '/attendance';
   static const history = '/attendance/history';
   static const summary = '/attendance/summary';
+  static const profile = '/profile';
 }
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -27,6 +31,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) => const RegisterPage(),
       ),
       GoRoute(
         path: AppRoutes.home,
@@ -44,15 +52,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.summary,
         builder: (context, state) => const SummaryPage(),
       ),
+      GoRoute(
+        path: AppRoutes.profile,
+        builder: (context, state) => const ProfilePage(),
+      ),
     ],
     redirect: (context, state) {
       final isAuthenticated = authStatus == AuthStatus.authenticated;
-      final isAtLogin = state.matchedLocation == AppRoutes.login;
+      final location = state.matchedLocation;
+      final isAtPublicAuthPage =
+          location == AppRoutes.login || location == AppRoutes.register;
 
-      if (!isAuthenticated && !isAtLogin) {
+      if (!isAuthenticated && !isAtPublicAuthPage) {
         return AppRoutes.login;
       }
-      if (isAuthenticated && isAtLogin) {
+      if (isAuthenticated && isAtPublicAuthPage) {
         return AppRoutes.home;
       }
       return null;

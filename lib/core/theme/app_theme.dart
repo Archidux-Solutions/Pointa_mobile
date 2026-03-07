@@ -5,9 +5,16 @@ import 'package:pointa_mobile/core/theme/app_typography.dart';
 
 abstract final class AppTheme {
   static ThemeData light() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.primary,
+    const colorScheme = ColorScheme(
       brightness: Brightness.light,
+      primary: AppColors.primary,
+      onPrimary: Colors.white,
+      secondary: AppColors.secondary,
+      onSecondary: Colors.white,
+      error: AppColors.danger,
+      onError: Colors.white,
+      surface: AppColors.surface,
+      onSurface: AppColors.onSurface,
     );
 
     return ThemeData(
@@ -18,7 +25,7 @@ abstract final class AppTheme {
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: false,
-        backgroundColor: colorScheme.surface,
+        backgroundColor: AppColors.background,
         foregroundColor: colorScheme.onSurface,
       ),
       snackBarTheme: SnackBarThemeData(
@@ -29,12 +36,16 @@ abstract final class AppTheme {
         ),
         behavior: SnackBarBehavior.floating,
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         elevation: 0,
+        color: AppColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadius.lg)),
+          borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+          side: const BorderSide(color: AppColors.border),
         ),
+        shadowColor: AppColors.onSurface.withValues(alpha: .06),
       ),
+      dividerTheme: const DividerThemeData(color: AppColors.border),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.surface,
@@ -44,11 +55,11 @@ abstract final class AppTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          borderSide: BorderSide.none,
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.md),
@@ -73,6 +84,23 @@ abstract final class AppTheme {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: AppColors.softBlue,
+        labelTextStyle: WidgetStatePropertyAll(
+          TextStyle(
+            color: AppColors.mutedText,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.primary);
+          }
+          return const IconThemeData(color: AppColors.mutedText);
+        }),
       ),
     );
   }

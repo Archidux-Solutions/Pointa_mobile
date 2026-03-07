@@ -1,0 +1,433 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pointa Mobile Design System and Mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root {
+      --bg: #f5f8ff;
+      --surface: #ffffff;
+      --surface-2: #eef4ff;
+      --ink: #0f172a;
+      --muted: #55627a;
+      --line: #d7e2ff;
+      --primary: #1857ff;
+      --primary-strong: #0f3fcf;
+      --secondary: #18c0b5;
+      --danger: #e24a5d;
+      --warning: #f2a935;
+      --success: #11a975;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 14px 30px rgba(30, 70, 180, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Manrope', system-ui, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 10% 0%, #dce7ff 0%, #f5f8ff 40%, #f7fbff 100%);
+      padding: 32px;
+    }
+
+    .board {
+      width: 1920px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+    }
+
+    .page {
+      background: rgba(255,255,255,0.78);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 26px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(4px);
+      min-height: 980px;
+    }
+
+    .page h2 {
+      margin: 0 0 18px;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .muted { color: var(--muted); }
+
+    .chips, .swatches, .type-scale {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .swatches {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .swatch {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px;
+    }
+
+    .color {
+      height: 56px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .c1 { background: var(--primary); }
+    .c2 { background: var(--secondary); }
+    .c3 { background: var(--ink); }
+    .c4 { background: var(--success); }
+    .c5 { background: var(--warning); }
+    .c6 { background: var(--danger); }
+
+    .type-scale {
+      grid-template-columns: 1fr;
+    }
+
+    .type-item {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+    }
+
+    .ui-kit {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .kit-block {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface);
+      padding: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: none;
+      border-radius: 12px;
+      height: 44px;
+      padding: 0 16px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-soft { background: var(--surface-2); color: var(--primary-strong); }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    .field {
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      color: #74839f;
+      font-size: 13px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 8px;
+    }
+
+    .tag-ok { background: #dff7ef; color: #0e8a5f; }
+    .tag-warn { background: #fff3dd; color: #b77600; }
+    .tag-off { background: #ffe5e7; color: #c73548; }
+
+    .mobile-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .phone {
+      width: 100%;
+      min-height: 430px;
+      border: 1px solid #cfe0ff;
+      border-radius: 24px;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      padding: 14px;
+      box-shadow: 0 10px 24px rgba(30, 70, 180, 0.10);
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #7182a6;
+      margin-bottom: 10px;
+    }
+
+    .title { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 7px;
+    }
+
+    .small { font-size: 12px; color: #677796; }
+    .strong { font-size: 13px; font-weight: 700; }
+
+    .kpi {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .kpi .card { margin-bottom: 0; text-align: center; }
+
+    .state-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .state {
+      border: 1px dashed #b7c9ef;
+      border-radius: 12px;
+      background: #fbfdff;
+      padding: 10px;
+      font-size: 12px;
+    }
+
+    .flow {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .flow-line {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-weight: 700;
+      color: #2b3f68;
+    }
+
+    .node {
+      background: #eef4ff;
+      border: 1px solid #cfe0ff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+
+    .arrow { color: #96a7c8; font-size: 14px; }
+
+    .caption {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #687997;
+    }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <section class="page">
+      <h2>Page 1 - Foundations</h2>
+      <p class="muted">Pointa Mobile visual system aligned with web identity, optimized for daily attendance workflows.</p>
+      <div class="swatches">
+        <div class="swatch"><div class="color c1"></div><div class="strong">Primary / #1857FF</div><div class="small">CTA, active states, links</div></div>
+        <div class="swatch"><div class="color c2"></div><div class="strong">Secondary / #18C0B5</div><div class="small">Positive accents, badges</div></div>
+        <div class="swatch"><div class="color c3"></div><div class="strong">Ink / #0F172A</div><div class="small">Main text and headings</div></div>
+        <div class="swatch"><div class="color c4"></div><div class="strong">Success / #11A975</div><div class="small">Success and synced states</div></div>
+        <div class="swatch"><div class="color c5"></div><div class="strong">Warning / #F2A935</div><div class="small">Delays and attention states</div></div>
+        <div class="swatch"><div class="color c6"></div><div class="strong">Danger / #E24A5D</div><div class="small">Errors and critical alerts</div></div>
+      </div>
+      <div class="type-scale">
+        <div class="type-item"><div style="font-size:28px;font-weight:800;">Display 28 / Bold</div><div class="small">Page hero and key moments</div></div>
+        <div class="type-item"><div style="font-size:20px;font-weight:800;">Heading 20 / ExtraBold</div><div class="small">Screen titles</div></div>
+        <div class="type-item"><div style="font-size:16px;font-weight:700;">Title 16 / Bold</div><div class="small">Card titles and sections</div></div>
+        <div class="type-item"><div style="font-size:14px;font-weight:600;">Body 14 / SemiBold</div><div class="small">Primary content</div></div>
+        <div class="type-item"><div style="font-size:12px;font-weight:500;">Caption 12 / Medium</div><div class="small">Help text and metadata</div></div>
+      </div>
+    </section>
+
+    <section class="page">
+      <h2>Page 2 - UI Kit</h2>
+      <p class="muted">Reusable components and states for Flutter handoff.</p>
+      <div class="ui-kit">
+        <div class="kit-block">
+          <div class="strong" style="margin-bottom:10px;">Buttons</div>
+          <button class="btn btn-primary">Primary Action</button>
+          <button class="btn btn-soft">Secondary</button>
+          <button class="btn btn-danger">Destructive</button>
+        </div>
+        <div class="kit-block">
+          <div class="strong" style="margin-bottom:10px;">Fields</div>
+          <div class="field">Work email</div>
+          <div class="field" style="margin-top:8px;">Password</div>
+          <div class="field" style="margin-top:8px;border-color:#f3b5bf;background:#fff6f7;">Error: invalid password</div>
+        </div>
+        <div class="kit-block">
+          <div class="strong" style="margin-bottom:10px;">Status chips</div>
+          <span class="tag tag-ok">Synced</span>
+          <span class="tag tag-warn">Delayed</span>
+          <span class="tag tag-off">Offline</span>
+        </div>
+        <div class="kit-block">
+          <div class="strong" style="margin-bottom:10px;">Cards & Alerts</div>
+          <div class="card"><div class="strong">Today summary</div><div class="small">Worked 07h40 | Late 1 | Absence 0</div></div>
+          <div class="state">Error state with retry and clear copywriting.</div>
+        </div>
+      </div>
+      <p class="caption">Component variants required: default, pressed, disabled, loading, error, success.</p>
+    </section>
+
+    <section class="page">
+      <h2>Page 3 - Mobile Final Screens</h2>
+      <p class="muted">Core employee flow: login, dashboard, attendance, history, recap, sync, profile and UI states.</p>
+      <div class="mobile-grid">
+        <article class="phone">
+          <div class="status"><span>09:41</span><span>LTE 95%</span></div>
+          <div class="title">Login</div>
+          <div class="card"><div class="small">Welcome to Pointa</div><div class="strong">Sign in to continue</div></div>
+          <div class="field">email@company.com</div>
+          <div class="field" style="margin-top:8px;">********</div>
+          <button class="btn btn-primary" style="width:100%;margin-top:12px;">Sign in</button>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:43</span><span>LTE 92%</span></div>
+          <div class="title">Dashboard</div>
+          <div class="card"><div class="strong">Hello, Abdoul</div><div class="small">Today status: Checked out</div></div>
+          <div class="kpi">
+            <div class="card"><div class="small">Worked</div><div class="strong">07h40</div></div>
+            <div class="card"><div class="small">Late</div><div class="strong">1</div></div>
+            <div class="card"><div class="small">Absence</div><div class="strong">0</div></div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;">Start attendance flow</button>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:45</span><span>LTE 88%</span></div>
+          <div class="title">Attendance</div>
+          <div class="card"><div class="small">Current status</div><div class="strong">Off duty</div><div class="small">Last action: 17:08</div></div>
+          <div class="card"><div class="small">GPS Zone (mock)</div><div class="strong">HQ Ouaga - Radius 60m</div></div>
+          <button class="btn btn-primary" style="width:100%;">Check in now</button>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:47</span><span>LTE 90%</span></div>
+          <div class="title">History</div>
+          <div class="card"><div class="row"><span class="strong">Check in</span><span class="small">08:05</span></div><div class="small">HQ Ouaga</div></div>
+          <div class="card"><div class="row"><span class="strong">Check out</span><span class="small">17:01</span></div><div class="small">HQ Ouaga</div></div>
+          <div class="card"><div class="row"><span class="strong">Check in</span><span class="small">08:09</span></div><div class="small">HQ Ouaga</div></div>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:49</span><span>LTE 86%</span></div>
+          <div class="title">Recap</div>
+          <div class="card"><div class="small">Worked time</div><div class="strong">07h40</div></div>
+          <div class="card"><div class="small">Late count</div><div class="strong">1</div></div>
+          <div class="card"><div class="small">Absence count</div><div class="strong">0</div></div>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:51</span><span>LTE 70%</span></div>
+          <div class="title">Sync center</div>
+          <div class="card"><span class="tag tag-off">Offline queue</span><div class="small">2 actions waiting to sync</div></div>
+          <button class="btn btn-primary" style="width:100%;">Sync now</button>
+          <div class="card" style="margin-top:10px;"><span class="tag tag-ok">Synced</span><div class="small">Last sync: 09:50</div></div>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:52</span><span>LTE 80%</span></div>
+          <div class="title">Profile & Settings</div>
+          <div class="card"><div class="strong">Abdoul Sinon</div><div class="small">sinonabdoul85@gmail.com</div></div>
+          <div class="card"><div class="small">Language</div><div class="strong">French</div></div>
+          <button class="btn btn-soft" style="width:100%;">Edit profile</button>
+          <button class="btn btn-danger" style="width:100%;margin-top:8px;">Sign out</button>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:53</span><span>LTE 76%</span></div>
+          <div class="title">States</div>
+          <div class="state-list">
+            <div class="state">Loading: skeleton card + spinner</div>
+            <div class="state">Empty: no attendance records yet</div>
+            <div class="state">Error: cannot load data + Retry button</div>
+            <div class="state">Offline: action saved locally and queued</div>
+          </div>
+        </article>
+
+        <article class="phone">
+          <div class="status"><span>09:54</span><span>LTE 74%</span></div>
+          <div class="title">Onboarding</div>
+          <div class="card"><div class="strong">Track your presence faster</div><div class="small">Check in, check out, follow your stats in one flow.</div></div>
+          <button class="btn btn-primary" style="width:100%;">Continue</button>
+        </article>
+      </div>
+    </section>
+
+    <section class="page">
+      <h2>Page 4 - Prototype and Handoff</h2>
+      <p class="muted">Navigation prototype and Flutter handoff rules.</p>
+      <div class="flow">
+        <div class="flow-line">
+          <span class="node">Login</span><span class="arrow">-></span>
+          <span class="node">Dashboard</span><span class="arrow">-></span>
+          <span class="node">Attendance</span><span class="arrow">-></span>
+          <span class="node">History</span><span class="arrow">-></span>
+          <span class="node">Recap</span><span class="arrow">-></span>
+          <span class="node">Sync</span>
+        </div>
+        <p class="caption">Transitions: fast fade + slide. Keep interaction latency under 300ms where possible.</p>
+      </div>
+      <div class="flow">
+        <div class="strong">Flutter handoff notes</div>
+        <ul class="small" style="line-height:1.7;margin:8px 0 0 16px;">
+          <li>Spacing scale: 8/12/16/24/32</li>
+          <li>Corner radii: 10/14/20</li>
+          <li>Text tokens: display, heading, title, body, caption</li>
+          <li>Core components: button, text field, card, tag, async states</li>
+          <li>Accessibility: contrast AA, minimum touch target 44x44</li>
+          <li>Offline-first behavior: queue and retry sync visible in UI</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

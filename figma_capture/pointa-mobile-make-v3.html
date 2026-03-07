@@ -1,0 +1,421 @@
+﻿<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pointa Mobile V3 - Complete Premium Journey</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root {
+      --bg: #eef3ff;
+      --ink: #0a1230;
+      --ink-soft: #5f6c90;
+      --primary: #245fff;
+      --primary-2: #1a45c8;
+      --teal: #12c7b1;
+      --success: #10a970;
+      --warn: #f3ad42;
+      --danger: #ea4d67;
+      --card: #ffffff;
+      --line: #d7e2fb;
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 14px;
+      --shadow: 0 18px 44px rgba(22, 56, 152, 0.13);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Urbanist', system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1000px 450px at 8% -6%, #c9daff 0%, transparent 65%),
+        radial-gradient(900px 420px at 96% 6%, #b8f4ea 0%, transparent 60%),
+        linear-gradient(180deg, #e7efff 0%, #f4f7ff 100%);
+      padding: 34px;
+    }
+
+    .wrap {
+      width: 3000px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .section {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255,255,255,.82);
+      border: 1px solid #d4e0fb;
+      border-radius: 34px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+    }
+
+    .blob {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(42px);
+      opacity: .45;
+      pointer-events: none;
+    }
+
+    .blob.b1 { width: 270px; height: 270px; right: -70px; top: -90px; background: #86a7ff; }
+    .blob.b2 { width: 230px; height: 230px; left: -70px; bottom: -80px; background: #85eadc; }
+
+    .h1 {
+      margin: 0;
+      font-family: 'Sora', sans-serif;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      position: relative;
+      z-index: 2;
+    }
+
+    .sub {
+      margin: 8px 0 18px;
+      color: var(--ink-soft);
+      font-size: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .token {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      box-shadow: 0 8px 20px rgba(25,58,146,.09);
+    }
+
+    .sw { height: 62px; border-radius: 10px; margin-bottom: 8px; }
+    .s1 { background: linear-gradient(135deg, #2b68ff 0%, #1a45c8 100%); }
+    .s2 { background: linear-gradient(135deg, #15c8b4 0%, #0f9d8b 100%); }
+    .s3 { background: #0a1230; }
+    .s4 { background: #10a970; }
+    .s5 { background: #f3ad42; }
+    .s6 { background: #ea4d67; }
+
+    .label { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+    .desc { font-size: 12px; color: #63739a; }
+
+    .kit {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      background: var(--card);
+      box-shadow: 0 10px 22px rgba(24,56,137,.08);
+    }
+
+    .btn {
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      padding: 0 14px;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 0 6px 8px 0;
+    }
+
+    .bp { background: linear-gradient(135deg, #2b69ff 0%, #1c4fd3 100%); color: #fff; }
+    .bs { background: #eaf1ff; color: #2b56ca; }
+    .bg { background: #fff; color: #2b56ca; border: 1px solid #c2d5ff; }
+    .bd { background: linear-gradient(135deg, #ff748a 0%, #d83f59 100%); color: #fff; }
+
+    .field {
+      height: 42px;
+      border: 1px solid #ced9f4;
+      border-radius: 12px;
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: #7382a8;
+      margin-bottom: 7px;
+    }
+
+    .chip {
+      display: inline-flex;
+      height: 28px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 0 10px;
+      margin: 0 6px 7px 0;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .ok { background: #ddf8ee; color: #0e8f63; }
+    .wa { background: #fff0da; color: #b7770f; }
+    .of { background: #ffe2e8; color: #c54057; }
+
+    .phones {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .phone {
+      border-radius: 32px;
+      border: 1px solid #ccdbff;
+      background:
+        radial-gradient(110px 80px at 100% 0%, rgba(83,132,255,.18), transparent 60%),
+        linear-gradient(180deg, #ffffff 0%, #f3f7ff 100%);
+      box-shadow: 0 12px 30px rgba(22, 55, 139, 0.12);
+      padding: 11px;
+      min-height: 540px;
+      position: relative;
+    }
+
+    .seq {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 24px;
+      height: 24px;
+      border-radius: 999px;
+      background: #1f58f4;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 14px rgba(18, 57, 164, .35);
+    }
+
+    .bar {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #7383ab;
+      margin-bottom: 8px;
+      padding-right: 26px;
+    }
+
+    .st {
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    .tile {
+      border: 1px solid #d6e1fb;
+      border-radius: 12px;
+      background: #fff;
+      padding: 9px;
+      margin-bottom: 7px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 5px;
+    }
+
+    .t1 { font-size: 12px; font-weight: 700; }
+    .t2 { font-size: 11px; color: #6d7c9e; }
+
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 7px; }
+    .k { border: 1px solid #d7e2fc; border-radius: 10px; text-align: center; padding: 7px 4px; background: #fff; }
+
+    .cta {
+      width: 100%;
+      height: 42px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #2d6bff 0%, #1e50d5 100%);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 3px;
+    }
+
+    .cta2 {
+      width: 100%;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid #bbcffd;
+      background: #fff;
+      color: #2d57c8;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .bottom-nav {
+      margin-top: 8px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #d8e2fb;
+      background: #fff;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      align-items: center;
+      text-align: center;
+      font-size: 10px;
+      color: #7b89ac;
+    }
+
+    .bottom-nav .active { color: #1f56e7; font-weight: 700; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 14px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .flowbox {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .path {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .node {
+      border: 1px solid #c5d7ff;
+      background: #eef4ff;
+      color: #2e52a1;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .arr { color: #92a4ce; font-size: 13px; display:flex;align-items:center; }
+
+    ul { margin: 8px 0 0 18px; padding: 0; }
+    li { margin-bottom: 5px; font-size: 12px; color: #64749b; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="section">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <h1 class="h1">Pointa Mobile V3 - Premium Foundations</h1>
+      <p class="sub">Inspired by top workforce products (Deputy, Homebase, Connecteam, When I Work) with stronger hierarchy, trust-focused color system, and modern mobile patterns.</p>
+      <div class="grid3">
+        <div class="token"><div class="sw s1"></div><div class="label">Primary Blue</div><div class="desc">Main actions, active nav, focus</div></div>
+        <div class="token"><div class="sw s2"></div><div class="label">Teal Accent</div><div class="desc">Positive moments and highlights</div></div>
+        <div class="token"><div class="sw s3"></div><div class="label">Ink</div><div class="desc">High contrast text and hierarchy</div></div>
+        <div class="token"><div class="sw s4"></div><div class="label">Success</div><div class="desc">Synced and confirmed operations</div></div>
+        <div class="token"><div class="sw s5"></div><div class="label">Warning</div><div class="desc">Delay and attendance risks</div></div>
+        <div class="token"><div class="sw s6"></div><div class="label">Danger</div><div class="desc">Errors and destructive actions</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <h1 class="h1">UI Kit - Components and States</h1>
+      <p class="sub">Built for Flutter implementation speed with reusable components and clear state variants.</p>
+      <div class="kit">
+        <div class="box"><div class="label">Buttons</div><button class="btn bp">Primary</button><button class="btn bs">Secondary</button><button class="btn bg">Ghost</button><button class="btn bd">Danger</button></div>
+        <div class="box"><div class="label">Inputs</div><div class="field">Email professionnel</div><div class="field">Mot de passe</div><div class="field" style="border-color:#efb9c2;background:#fff5f8;color:#c54a5f;">Erreur: identifiants invalides</div></div>
+        <div class="box"><div class="label">Status chips</div><span class="chip ok">Synced</span><span class="chip wa">Retard</span><span class="chip of">Sync en attente</span></div>
+        <div class="box"><div class="label">Async states</div><div class="tile"><div class="t1">Loading</div><div class="t2">Spinner + message utile</div></div><div class="tile"><div class="t1">Empty</div><div class="t2">Aucune action + CTA</div></div><div class="tile"><div class="t1">Error + Retry</div><div class="t2">Texte clair + bouton reessayer</div></div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <h1 class="h1">Complete Screen Journey - Splash to Final Screen</h1>
+      <p class="sub">20 screens end-to-end, including onboarding, auth, attendance, sync, profile, and all critical states.</p>
+      <div class="phones">
+        <article class="phone"><div class="seq">00</div><div class="bar"><span>09:41</span><span>5G 95%</span></div><div class="st">Splash</div><div class="tile" style="text-align:center;padding:20px 8px;"><div style="font-family:Sora;font-size:28px;font-weight:800;color:#2052de;">Pointa</div><div class="t2">Presence made simple</div></div></article>
+        <article class="phone"><div class="seq">01</div><div class="bar"><span>09:42</span><span>5G 95%</span></div><div class="st">Onboarding 1</div><div class="tile"><div class="t1">Pointage rapide</div><div class="t2">Arrivee et depart en 1 tap.</div></div><button class="cta">Suivant</button></article>
+        <article class="phone"><div class="seq">02</div><div class="bar"><span>09:43</span><span>5G 94%</span></div><div class="st">Onboarding 2</div><div class="tile"><div class="t1">Recap intelligent</div><div class="t2">Heures, retards, absences en temps reel.</div></div><button class="cta">Suivant</button></article>
+        <article class="phone"><div class="seq">03</div><div class="bar"><span>09:44</span><span>5G 94%</span></div><div class="st">Onboarding 3</div><div class="tile"><div class="t1">Offline safe</div><div class="t2">Les actions sont gardees si le reseau tombe.</div></div><button class="cta">Commencer</button></article>
+        <article class="phone"><div class="seq">04</div><div class="bar"><span>09:45</span><span>5G 93%</span></div><div class="st">Connexion</div><div class="field">Email</div><div class="field">Mot de passe</div><button class="cta">Se connecter</button><button class="cta2">Mot de passe oublie</button></article>
+
+        <article class="phone"><div class="seq">05</div><div class="bar"><span>09:46</span><span>5G 93%</span></div><div class="st">Reset password</div><div class="tile"><div class="t1">Recuperation</div><div class="t2">Entrer votre email pour recevoir un code.</div></div><div class="field">email@entreprise.com</div><button class="cta">Envoyer le code</button></article>
+        <article class="phone"><div class="seq">06</div><div class="bar"><span>09:47</span><span>5G 92%</span></div><div class="st">Dashboard (off duty)</div><div class="tile"><div class="t1">Bonjour Abdoul</div><div class="t2">Statut: Hors service</div></div><div class="kpis"><div class="k"><div class="t2">Travaille</div><div class="t1">07h40</div></div><div class="k"><div class="t2">Retard</div><div class="t1">1</div></div><div class="k"><div class="t2">Absence</div><div class="t1">0</div></div></div><button class="cta">Pointer arrivee</button><div class="bottom-nav"><span class="active">Accueil</span><span>Pointage</span><span>Historique</span><span>Profil</span></div></article>
+        <article class="phone"><div class="seq">07</div><div class="bar"><span>09:48</span><span>5G 90%</span></div><div class="st">Pointage ready</div><div class="tile"><div class="t2">Zone GPS</div><div class="t1">Siege Ouaga - Rayon 60m</div></div><div class="tile"><div class="t2">Verification</div><div class="t1">GPS + geofence + selfie (option)</div></div><button class="cta">Confirmer arrivee</button></article>
+        <article class="phone"><div class="seq">08</div><div class="bar"><span>09:49</span><span>5G 89%</span></div><div class="st">Check-in success</div><div class="tile"><span class="chip ok">En service</span><div class="t2">Arrivee enregistree a 09:49</div></div><button class="cta2">Retour dashboard</button></article>
+        <article class="phone"><div class="seq">09</div><div class="bar"><span>12:32</span><span>4G 81%</span></div><div class="st">Dashboard (on duty)</div><div class="tile"><div class="t1">Shift actif</div><div class="t2">Debut 09:49</div></div><button class="cta">Pointer pause</button><button class="cta2">Pointer depart</button><div class="bottom-nav"><span class="active">Accueil</span><span>Pointage</span><span>Historique</span><span>Profil</span></div></article>
+
+        <article class="phone"><div class="seq">10</div><div class="bar"><span>13:01</span><span>4G 80%</span></div><div class="st">Pause / Depart</div><div class="tile"><div class="row"><span class="t1">Pause debut</span><span class="t2">13:01</span></div></div><div class="tile"><div class="row"><span class="t1">Pause fin</span><span class="t2">13:16</span></div></div><button class="cta">Pointer depart final</button></article>
+        <article class="phone"><div class="seq">11</div><div class="bar"><span>17:10</span><span>4G 79%</span></div><div class="st">Historique</div><div class="tile"><div class="row"><span class="t1">Arrivee</span><span class="t2">09:49</span></div><div class="t2">Siege Ouaga</div></div><div class="tile"><div class="row"><span class="t1">Pause</span><span class="t2">13:01</span></div><div class="t2">Siege Ouaga</div></div><div class="tile"><div class="row"><span class="t1">Depart</span><span class="t2">17:08</span></div><div class="t2">Siege Ouaga</div></div><button class="cta2">Filtrer</button></article>
+        <article class="phone"><div class="seq">12</div><div class="bar"><span>17:11</span><span>4G 78%</span></div><div class="st">Historique filtre</div><div class="tile"><div class="t1">Periode</div><div class="t2">01 Mar - 31 Mar</div></div><div class="tile"><div class="t1">Site</div><div class="t2">Siege Ouaga</div></div><button class="cta">Appliquer filtres</button></article>
+        <article class="phone"><div class="seq">13</div><div class="bar"><span>17:12</span><span>4G 78%</span></div><div class="st">Recap jour</div><div class="kpis"><div class="k"><div class="t2">Heures</div><div class="t1">07h40</div></div><div class="k"><div class="t2">Retard</div><div class="t1">1</div></div><div class="k"><div class="t2">Absence</div><div class="t1">0</div></div></div><div class="tile"><div class="t2">Objectif quotidien</div><div class="t1">8h</div></div></article>
+        <article class="phone"><div class="seq">14</div><div class="bar"><span>17:13</span><span>4G 77%</span></div><div class="st">Recap mois</div><div class="tile"><div class="row"><span class="t2">Total heures</span><span class="t1">146h</span></div><div class="row"><span class="t2">Retards</span><span class="t1">4</span></div><div class="row"><span class="t2">Absences</span><span class="t1">1</span></div></div><button class="cta2">Exporter PDF</button></article>
+
+        <article class="phone"><div class="seq">15</div><div class="bar"><span>17:14</span><span>3G 52%</span></div><div class="st">Sync center (pending)</div><div class="tile"><span class="chip of">2 actions en attente</span><div class="t2">Le serveur est indisponible. Donnees sauvees localement.</div></div><button class="cta">Synchroniser maintenant</button></article>
+        <article class="phone"><div class="seq">16</div><div class="bar"><span>17:15</span><span>4G 76%</span></div><div class="st">Sync success</div><div class="tile"><span class="chip ok">Sync complete</span><div class="t2">2 actions envoye au backend.</div></div><button class="cta2">Voir historique</button></article>
+        <article class="phone"><div class="seq">17</div><div class="bar"><span>17:16</span><span>4G 74%</span></div><div class="st">Notifications</div><div class="tile"><div class="t1">Rappel</div><div class="t2">Vous n avez pas pointe votre depart.</div></div><div class="tile"><div class="t1">Validation</div><div class="t2">Votre recap du jour est disponible.</div></div></article>
+        <article class="phone"><div class="seq">18</div><div class="bar"><span>17:17</span><span>4G 73%</span></div><div class="st">Profil</div><div class="tile"><div class="t1">Abdoul Sinon</div><div class="t2">sinonabdoul85@gmail.com</div></div><div class="tile"><div class="t2">Poste</div><div class="t1">Agent operations</div></div><button class="cta2">Modifier profil</button></article>
+        <article class="phone"><div class="seq">19</div><div class="bar"><span>17:18</span><span>4G 72%</span></div><div class="st">Parametres (final)</div><div class="tile"><div class="t1">Langue</div><div class="t2">Francais</div></div><div class="tile"><div class="t1">Aide et support</div><div class="t2">Centre d aide + ticket</div></div><button class="btn bd" style="width:100%;margin-top:6px;">Se deconnecter</button></article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <h1 class="h1">Prototype and Handoff Rules</h1>
+      <p class="sub">Final interaction map and implementation constraints for robust Flutter delivery.</p>
+      <div class="flow">
+        <div class="flowbox">
+          <div class="label">Navigation map</div>
+          <div class="path">
+            <span class="node">00 Splash</span><span class="arr">-></span>
+            <span class="node">01/02/03 Onboarding</span><span class="arr">-></span>
+            <span class="node">04 Login</span><span class="arr">-></span>
+            <span class="node">06 Dashboard</span><span class="arr">-></span>
+            <span class="node">07 Pointage</span><span class="arr">-></span>
+            <span class="node">11 Historique</span><span class="arr">-></span>
+            <span class="node">13/14 Recap</span><span class="arr">-></span>
+            <span class="node">15/16 Sync</span><span class="arr">-></span>
+            <span class="node">18/19 Profil</span>
+          </div>
+        </div>
+        <div class="flowbox">
+          <div class="label">Flutter handoff checklist</div>
+          <ul>
+            <li>Primary CTA always visible on attendance critical screens.</li>
+            <li>Every error state has direct retry action.</li>
+            <li>Offline queue state visible when pending > 0.</li>
+            <li>Touch target minimum 48dp for accessibility.</li>
+            <li>Adaptive layout for large screens and foldables.</li>
+            <li>Components mapped to reusable Flutter widgets.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

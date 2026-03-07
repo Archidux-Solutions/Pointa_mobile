@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pointa Mobile V4A</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root{
+      --bg:#f2f6ff;
+      --bg-2:#ecf8f6;
+      --ink:#0a1630;
+      --muted:#5f6f93;
+      --line:#d8e4ff;
+      --card:#ffffff;
+      --pri:#1f64ff;
+      --pri-2:#1a47d4;
+      --good:#0da472;
+      --warn:#ee9e2f;
+      --err:#d94a63;
+      --mint:#16c4ad;
+      --lav:#6f82ff;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Manrope,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(980px 480px at -10% -10%,#cae2ff,transparent 60%),
+        radial-gradient(840px 400px at 120% 0%,#bbf0e7,transparent 60%),
+        linear-gradient(180deg,var(--bg),#f8fbff 30%,#f2f8ff);
+      padding:28px;
+    }
+    .wrap{
+      width:2860px;
+      margin:0 auto;
+      display:grid;
+      gap:16px;
+    }
+    .sec{
+      background:rgba(255,255,255,.86);
+      border:1px solid #d7e4ff;
+      border-radius:30px;
+      padding:24px;
+      box-shadow:0 16px 40px rgba(24,56,138,.13);
+    }
+    .h1{
+      margin:0;
+      font-family:"Space Grotesk",sans-serif;
+      font-size:32px;
+      font-weight:700;
+      letter-spacing:-.02em;
+    }
+    .sub{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:14px;
+    }
+    .grid-4{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-top:14px;
+    }
+    .tile{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+    }
+    .sw{
+      height:60px;
+      border-radius:12px;
+      margin-bottom:8px;
+    }
+    .s-pri{background:linear-gradient(140deg,#2c7dff,#1c4fd6)}
+    .s-ink{background:#0a1630}
+    .s-mint{background:linear-gradient(140deg,#1acdb7,#0fa28f)}
+    .s-warn{background:linear-gradient(140deg,#ffbf63,#e28e10)}
+    .lbl{font-size:13px;font-weight:800}
+    .desc{font-size:12px;color:#6a7aa0}
+    .kit{
+      display:grid;
+      grid-template-columns:1.2fr 1fr 1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+    .btn{
+      border:0;
+      border-radius:13px;
+      height:42px;
+      padding:0 14px;
+      font-size:12px;
+      font-weight:700;
+      margin-right:6px;
+      margin-bottom:6px;
+      cursor:default;
+    }
+    .btn-p{background:linear-gradient(135deg,var(--pri),var(--pri-2));color:#fff}
+    .btn-s{background:#eaf1ff;color:#2751ca}
+    .btn-g{background:#fff;color:#2751ca;border:1px solid #bbceff}
+    .btn-d{background:linear-gradient(135deg,#ff8296,#d43f58);color:#fff}
+    .field{
+      height:42px;
+      border:1px solid #d1ddfa;
+      border-radius:13px;
+      display:flex;
+      align-items:center;
+      padding:0 12px;
+      font-size:12px;
+      color:#7282a8;
+      margin-bottom:7px;
+      background:#fff;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      height:28px;
+      border-radius:999px;
+      padding:0 11px;
+      font-size:11px;
+      font-weight:700;
+      margin-right:6px;
+      margin-bottom:6px;
+    }
+    .ok{background:#dcf7ee;color:#0d8d61}
+    .wa{background:#fff1de;color:#b6760f}
+    .er{background:#ffe4ea;color:#c63e56}
+    .phones{
+      display:grid;
+      grid-template-columns:repeat(6,1fr);
+      gap:12px;
+      margin-top:14px;
+    }
+    .phone{
+      min-height:556px;
+      border:1px solid #cfdfff;
+      border-radius:34px;
+      padding:10px;
+      position:relative;
+      background:
+        radial-gradient(280px 150px at 90% -10%,rgba(31,100,255,.25),transparent 62%),
+        radial-gradient(220px 140px at 15% -10%,rgba(22,196,173,.22),transparent 64%),
+        linear-gradient(180deg,#ffffff,#f3f8ff);
+      box-shadow:0 14px 30px rgba(16,45,119,.14);
+      overflow:hidden;
+    }
+    .phone::after{
+      content:"";
+      position:absolute;
+      right:-40px;
+      bottom:-55px;
+      width:160px;
+      height:160px;
+      border-radius:999px;
+      background:linear-gradient(140deg,rgba(111,130,255,.15),rgba(22,196,173,.18));
+      pointer-events:none;
+    }
+    .seq{
+      position:absolute;
+      top:10px;
+      right:10px;
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      background:linear-gradient(135deg,var(--pri),var(--pri-2));
+      color:#fff;
+      font-size:11px;
+      font-weight:800;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .status{
+      display:flex;
+      justify-content:space-between;
+      font-size:10px;
+      color:#7a89ae;
+      margin-bottom:10px;
+      padding-right:30px;
+    }
+    .title{
+      font-family:"Space Grotesk",sans-serif;
+      font-size:15px;
+      font-weight:700;
+      margin-bottom:8px;
+      letter-spacing:-.01em;
+    }
+    .card{
+      background:#fff;
+      border:1px solid #d8e4ff;
+      border-radius:13px;
+      padding:10px;
+      margin-bottom:8px;
+      box-shadow:0 4px 14px rgba(20,48,116,.06);
+    }
+    .kpi{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:7px;
+      margin-bottom:7px;
+    }
+    .k{
+      border:1px solid #d9e5ff;
+      border-radius:11px;
+      background:#fff;
+      padding:7px 5px;
+      text-align:center;
+    }
+    .k b{display:block;font-size:12px}
+    .k span{font-size:10px;color:#68789f}
+    .cta{
+      width:100%;
+      height:43px;
+      border:0;
+      border-radius:13px;
+      color:#fff;
+      font-size:12px;
+      font-weight:700;
+      background:linear-gradient(135deg,var(--pri),var(--pri-2));
+      margin-top:3px;
+    }
+    .cta-ghost{
+      width:100%;
+      height:40px;
+      border-radius:13px;
+      border:1px solid #bfd2ff;
+      background:#fff;
+      color:#315ccd;
+      font-size:11px;
+      font-weight:700;
+      margin-top:6px;
+    }
+    .nav{
+      margin-top:8px;
+      height:44px;
+      border-radius:13px;
+      border:1px solid #d7e3ff;
+      background:#fff;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      align-items:center;
+      text-align:center;
+      font-size:10px;
+      color:#7b8aac;
+    }
+    .nav .a{color:#2157e5;font-weight:800}
+    .mut{font-size:11px;color:#65759c}
+    .big{
+      font-family:"Space Grotesk",sans-serif;
+      font-size:28px;
+      font-weight:700;
+      letter-spacing:-.03em;
+      margin:10px 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="sec">
+      <h1 class="h1">Pointa Mobile V4A - Direction + Foundations + Screens 00-10</h1>
+      <p class="sub">Direction inspiree du template valide: trust blue, glass cards, dense info blocks, CTA clair, rendu mobile premium adapte a Pointa.</p>
+      <div class="grid-4">
+        <div class="tile"><div class="sw s-pri"></div><div class="lbl">Primary gradient</div><div class="desc">Actions critiques, navigation principale.</div></div>
+        <div class="tile"><div class="sw s-ink"></div><div class="lbl">Ink contrast</div><div class="desc">Texte prioritaire et titres lisibles.</div></div>
+        <div class="tile"><div class="sw s-mint"></div><div class="lbl">Positive accent</div><div class="desc">Synchro ok, operation validee.</div></div>
+        <div class="tile"><div class="sw s-warn"></div><div class="lbl">Risk alert</div><div class="desc">Retard, anomalie ou attention requise.</div></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h1 class="h1">UI Kit Core</h1>
+      <p class="sub">Base reutilisable pour Flutter: composants, variantes, etats.</p>
+      <div class="kit">
+        <div class="tile">
+          <div class="lbl">Buttons</div>
+          <button class="btn btn-p">Primary</button>
+          <button class="btn btn-s">Secondary</button>
+          <button class="btn btn-g">Ghost</button>
+          <button class="btn btn-d">Danger</button>
+          <button class="btn btn-p" style="opacity:.7">Loading...</button>
+        </div>
+        <div class="tile">
+          <div class="lbl">Inputs</div>
+          <div class="field">email@entreprise.com</div>
+          <div class="field">mot de passe</div>
+          <div class="field" style="border-color:#efb6c1;background:#fff7f9;color:#c24d61">erreur credentials</div>
+        </div>
+        <div class="tile">
+          <div class="lbl">Status chips</div>
+          <span class="chip ok">sync ok</span>
+          <span class="chip wa">retard</span>
+          <span class="chip er">queue offline</span>
+        </div>
+        <div class="tile">
+          <div class="lbl">Layout rules</div>
+          <div class="desc">8pt grid</div>
+          <div class="desc">Touch target min 48dp</div>
+          <div class="desc">Sticky CTA sur actions de pointage</div>
+          <div class="desc">Feedback direct succes/erreur</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h1 class="h1">Flow 00-10</h1>
+      <p class="sub">Du splash au scenario shift actif avec transitions claires.</p>
+      <div class="phones">
+        <article class="phone">
+          <div class="seq">00</div>
+          <div class="status"><span>09:41</span><span>5G</span></div>
+          <div class="title">Splash</div>
+          <div class="card" style="padding:24px 10px;text-align:center">
+            <div class="big">Pointa</div>
+            <div class="mut">Presence intelligence for teams</div>
+          </div>
+          <div class="card"><span class="chip ok">secure sync</span><span class="chip ok">fast check-in</span></div>
+        </article>
+
+        <article class="phone">
+          <div class="seq">01</div>
+          <div class="status"><span>09:42</span><span>5G</span></div>
+          <div class="title">Onboarding 1</div>
+          <div class="card">
+            <b>Pointage en 1 tap</b>
+            <div class="mut">Arrivee et depart avec geofence.</div>
+          </div>
+          <div class="card"><b>Etat instantane</b><div class="mut">Tu sais tout de suite ton statut du jour.</div></div>
+          <button class="cta">Suivant</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">02</div>
+          <div class="status"><span>09:43</span><span>5G</span></div>
+          <div class="title">Onboarding 2</div>
+          <div class="card"><b>Rappels intelligents</b><div class="mut">Notifs retard, depart oublie, recap pret.</div></div>
+          <div class="card"><b>Historique exploitable</b><div class="mut">Filtre simple par periode et statut.</div></div>
+          <button class="cta">Suivant</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">03</div>
+          <div class="status"><span>09:44</span><span>5G</span></div>
+          <div class="title">Onboarding 3</div>
+          <div class="card"><b>Mode offline</b><div class="mut">Actions stockees localement puis synchronisees.</div></div>
+          <div class="card"><b>Controle total</b><div class="mut">Tu vois clairement ce qui est en attente.</div></div>
+          <button class="cta">Commencer</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">04</div>
+          <div class="status"><span>09:45</span><span>5G</span></div>
+          <div class="title">Connexion</div>
+          <div class="field">Email pro</div>
+          <div class="field">Mot de passe</div>
+          <button class="cta">Se connecter</button>
+          <button class="cta-ghost">Mot de passe oublie</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">05</div>
+          <div class="status"><span>09:46</span><span>5G</span></div>
+          <div class="title">Validation securite</div>
+          <div class="card"><b>Biometrie activee</b><div class="mut">Utiliser empreinte pour connexion rapide.</div></div>
+          <button class="cta">Activer</button>
+          <button class="cta-ghost">Plus tard</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">06</div>
+          <div class="status"><span>09:47</span><span>5G</span></div>
+          <div class="title">Dashboard off duty</div>
+          <div class="card"><b>Bonjour Abdoul</b><div class="mut">Statut actuel: hors service</div></div>
+          <div class="kpi">
+            <div class="k"><span>Heures</span><b>07h40</b></div>
+            <div class="k"><span>Retards</span><b>1</b></div>
+            <div class="k"><span>Absences</span><b>0</b></div>
+          </div>
+          <button class="cta">Pointer arrivee</button>
+          <div class="nav"><span class="a">Accueil</span><span>Pointage</span><span>Historique</span><span>Profil</span></div>
+        </article>
+
+        <article class="phone">
+          <div class="seq">07</div>
+          <div class="status"><span>09:48</span><span>5G</span></div>
+          <div class="title">Pointage arrivee</div>
+          <div class="card"><b>Zone valide</b><div class="mut">Siege Ouaga, rayon 60m.</div></div>
+          <div class="card"><b>Checks actifs</b><div class="mut">GPS + geofence + selfie.</div></div>
+          <button class="cta">Confirmer arrivee</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">08</div>
+          <div class="status"><span>09:49</span><span>5G</span></div>
+          <div class="title">Check-in success</div>
+          <div class="card">
+            <span class="chip ok">en service</span>
+            <div class="mut">Arrivee enregistree a 09:49.</div>
+          </div>
+          <div class="card"><b>Prochaine action</b><div class="mut">Pointer depart a la fin du shift.</div></div>
+          <button class="cta-ghost">Retour dashboard</button>
+        </article>
+
+        <article class="phone">
+          <div class="seq">09</div>
+          <div class="status"><span>12:30</span><span>4G</span></div>
+          <div class="title">Dashboard on duty</div>
+          <div class="card"><b>Shift actif</b><div class="mut">Debut 09:49, pause restante 45 min.</div></div>
+          <button class="cta">Pointer pause</button>
+          <button class="cta-ghost">Pointer depart</button>
+          <div class="nav"><span class="a">Accueil</span><span>Pointage</span><span>Historique</span><span>Profil</span></div>
+        </article>
+
+        <article class="phone">
+          <div class="seq">10</div>
+          <div class="status"><span>13:01</span><span>4G</span></div>
+          <div class="title">Pause / depart</div>
+          <div class="card"><b>Pause debut</b><div class="mut">13:01 enregistre.</div></div>
+          <div class="card"><b>Pause fin</b><div class="mut">13:16 enregistre.</div></div>
+          <button class="cta">Pointer depart final</button>
+        </article>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

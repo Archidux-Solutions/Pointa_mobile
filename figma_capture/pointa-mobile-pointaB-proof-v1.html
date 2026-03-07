@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Pointa_B Proof V1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root{
+      --bg:#ececef;
+      --phone:#1f222a;
+      --screen:#f7f9ff;
+      --line:#e5ebf7;
+      --txt:#1c2744;
+      --mut:#7884a3;
+      --blue:#3a8dff;
+      --blue2:#2867dc;
+      --green:#2ac18f;
+      --yellow:#f6cc46;
+      --indigo:#4f80eb;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Plus Jakarta Sans",sans-serif;
+      color:var(--txt);
+      background:
+        radial-gradient(900px 420px at 15% -8%,#ffffff,transparent 60%),
+        radial-gradient(760px 360px at 100% 0%,#f8f8fc,transparent 62%),
+        var(--bg);
+      padding:32px;
+    }
+    .wrap{
+      width:2600px;
+      margin:0 auto;
+      display:grid;
+      gap:16px;
+    }
+    .sec{
+      background:rgba(255,255,255,.46);
+      border:1px solid #dde1eb;
+      border-radius:26px;
+      padding:22px;
+      box-shadow:0 20px 40px rgba(62,72,100,.10);
+    }
+    .h1{margin:0;font-size:30px;font-weight:800;letter-spacing:-.02em}
+    .sub{margin:8px 0 0;color:#687697;font-size:14px}
+
+    .stage{
+      margin-top:14px;
+      min-height:760px;
+      border-radius:24px;
+      border:1px dashed #d0d6e5;
+      background:
+        radial-gradient(660px 300px at 82% 12%,rgba(58,141,255,.09),transparent 62%),
+        radial-gradient(700px 330px at 18% 90%,rgba(101,110,132,.10),transparent 62%),
+        #ececef;
+      position:relative;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:46px;
+    }
+    .shadow{
+      position:absolute;
+      bottom:52px;
+      width:420px;
+      height:58px;
+      border-radius:999px;
+      background:rgba(37,43,58,.18);
+      filter:blur(18px);
+    }
+    .shadow.left{left:300px}
+    .shadow.right{right:310px}
+
+    .phone{
+      width:338px;
+      height:698px;
+      border-radius:48px;
+      border:6px solid var(--phone);
+      background:#13161d;
+      padding:8px;
+      box-shadow:0 26px 46px rgba(24,26,34,.35);
+      position:relative;
+      overflow:hidden;
+    }
+    .phone.left{transform:rotate(-12deg) translateY(-8px)}
+    .phone.right{transform:rotate(12deg) translateY(24px)}
+    .screen{
+      height:100%;
+      border-radius:38px;
+      background:var(--screen);
+      border:1px solid #dfe4f2;
+      overflow:hidden;
+      position:relative;
+    }
+    .notch{
+      position:absolute;
+      top:8px;
+      left:50%;
+      transform:translateX(-50%);
+      width:74px;
+      height:22px;
+      border-radius:999px;
+      background:#11141d;
+      z-index:8;
+    }
+    .status{
+      height:34px;
+      padding:10px 16px 0;
+      font-size:11px;
+      color:#f3f7ff;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      position:relative;
+      z-index:2;
+    }
+    .status.dark{color:#1f2b4b}
+    .head{
+      margin-top:-34px;
+      padding:42px 16px 20px;
+      background:linear-gradient(145deg,var(--blue),var(--blue2));
+      border-bottom-left-radius:34px;
+      border-bottom-right-radius:34px;
+      color:#fff;
+      position:relative;
+      overflow:hidden;
+    }
+    .head:before{
+      content:"";
+      position:absolute;
+      right:-52px;
+      top:-72px;
+      width:176px;
+      height:176px;
+      border-radius:999px;
+      background:rgba(255,255,255,.09);
+    }
+    .head:after{
+      content:"";
+      position:absolute;
+      left:-40px;
+      bottom:-64px;
+      width:126px;
+      height:126px;
+      border-radius:999px;
+      background:rgba(255,255,255,.09);
+    }
+    h2{margin:0;font-size:28px;font-weight:800;letter-spacing:-.02em}
+    .s{margin:2px 0 0;font-size:12px;opacity:.85}
+    .card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      box-shadow:0 5px 14px rgba(65,80,120,.08);
+    }
+    .stack{padding:12px 14px 14px;display:grid;gap:10px}
+    .small{font-size:11px;color:var(--mut)}
+    .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+    .time-box{
+      flex:1;
+      background:#f6f8fd;
+      border:1px solid #edf1fb;
+      border-radius:10px;
+      padding:8px 7px;
+    }
+    .time-box b{display:block;font-size:21px;line-height:1.15}
+    .btn{
+      width:100%;
+      border:0;
+      height:38px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:700;
+      color:#fff;
+      background:linear-gradient(135deg,#4f9cff,#2d73e8);
+    }
+    .log{padding:0 14px 12px}
+    .log-item{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px 9px;
+      margin-bottom:7px;
+    }
+    .pill{font-size:10px;font-weight:700;color:#1ea672}
+    .nav{
+      position:absolute;
+      bottom:8px;
+      left:8px;
+      right:8px;
+      height:56px;
+      background:#fff;
+      border:1px solid #e6ebf7;
+      border-radius:16px;
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      align-items:center;
+      text-align:center;
+      font-size:10px;
+      color:#9ba6bf;
+      box-shadow:0 8px 20px rgba(72,86,122,.08);
+    }
+    .nav .active{
+      justify-self:center;
+      background:#e9f1ff;
+      color:#3b82f4;
+      border-radius:999px;
+      height:28px;
+      min-width:72px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:0 10px;
+      font-weight:700;
+    }
+    .avatar{
+      width:34px;height:34px;border-radius:999px;
+      background:linear-gradient(145deg,#ffd9bf,#f4a780);
+      border:2px solid #fff;
+      box-shadow:0 2px 8px rgba(48,60,97,.14);
+      flex-shrink:0;
+    }
+    .chip{
+      padding:2px 8px;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:700;
+      background:#ebf3ff;
+      color:#387bea;
+    }
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .kpi{border-radius:10px;padding:9px 8px;color:#fff;min-height:58px}
+    .kpi b{display:block;font-size:23px;line-height:1.05}
+    .kpi span{font-size:10px;opacity:.94}
+    .g{background:linear-gradient(145deg,#35ca97,#1da477)}
+    .i{background:linear-gradient(145deg,#598df1,#3f74de)}
+    .y{background:linear-gradient(145deg,#ffd84f,#f0b72c);color:#4a3a08}
+    .meeting{
+      background:#f8faff;
+      border:1px solid #e7edf9;
+      border-radius:12px;
+      padding:8px;
+      margin-bottom:7px;
+    }
+    .join{
+      background:#3f82ef;
+      color:#fff;
+      border:0;
+      border-radius:999px;
+      height:26px;
+      padding:0 12px;
+      font-size:10px;
+      font-weight:700;
+    }
+    .quick{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .q{
+      border:1px solid #e7edf9;
+      background:#fff;
+      border-radius:10px;
+      min-height:56px;
+      padding:8px;
+      font-size:11px;
+      color:#6f7c9c;
+    }
+    .foundation{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+    .tile{
+      background:#fff;
+      border:1px solid #dfe5f2;
+      border-radius:14px;
+      padding:10px;
+    }
+    .sw{height:56px;border-radius:10px;margin-bottom:7px}
+    .sw-b{background:linear-gradient(145deg,var(--blue),var(--blue2))}
+    .sw-g{background:linear-gradient(145deg,#35ca97,#1da477)}
+    .sw-i{background:linear-gradient(145deg,#598df1,#3f74de)}
+    .sw-y{background:linear-gradient(145deg,#ffd84f,#f0b72c)}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="sec">
+      <h1 class="h1">Pointa_B Proof V1 - Wizin style adaptation</h1>
+      <p class="sub">2 ecrans de reference pour valider le niveau visuel avant de decliner tout le flow Pointa.</p>
+
+      <div class="stage">
+        <div class="shadow left"></div>
+        <div class="shadow right"></div>
+
+        <article class="phone left">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status"><span>08:15</span><span>5G</span></div>
+            <div class="head">
+              <h2>Attendance</h2>
+              <p class="s">Your daily attendance log</p>
+            </div>
+            <div class="stack">
+              <div class="card">
+                <div class="small">Attendance Log</div>
+                <div class="small">01 Sep 2026</div>
+                <div class="row" style="margin-top:8px">
+                  <div class="time-box">
+                    <div class="small">First Checked In</div>
+                    <b>00:00</b>
+                  </div>
+                  <div class="time-box">
+                    <div class="small">Last Checked Out</div>
+                    <b>00:00</b>
+                  </div>
+                </div>
+                <button class="btn" style="margin-top:9px">Check in</button>
+              </div>
+            </div>
+            <div class="log">
+              <div class="row" style="margin-bottom:7px"><b style="font-size:12px">Attendance Log</b><span class="small">See all</span></div>
+              <div class="log-item"><div class="row"><span class="small">27 Sep 2026</span><span class="pill">On Time</span></div><div class="row"><span class="small">In 10:03 AM</span><span class="small">Out 07:13 PM</span></div></div>
+              <div class="log-item"><div class="row"><span class="small">26 Sep 2026</span><span class="pill">On Time</span></div><div class="row"><span class="small">In 10:03 AM</span><span class="small">Out 07:13 PM</span></div></div>
+              <div class="log-item"><div class="row"><span class="small">25 Sep 2026</span><span class="pill">On Time</span></div><div class="row"><span class="small">In 10:03 AM</span><span class="small">Out 07:13 PM</span></div></div>
+            </div>
+            <nav class="nav">
+              <span>Home</span>
+              <span>Log</span>
+              <span class="active">Attendance</span>
+              <span>Alerts</span>
+              <span>Profile</span>
+            </nav>
+          </div>
+        </article>
+
+        <article class="phone right">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status dark"><span>08:15</span><span>5G</span></div>
+            <div style="padding:10px 14px 0">
+              <div class="row">
+                <div class="row" style="gap:9px;justify-content:flex-start">
+                  <div class="avatar"></div>
+                  <div>
+                    <div style="font-size:13px;font-weight:700">Abdoul Sinon</div>
+                    <div class="small">Pointa Employee</div>
+                  </div>
+                </div>
+                <span class="chip">Today</span>
+              </div>
+            </div>
+            <div style="padding:12px 14px 0">
+              <div class="small">Today's Summary</div>
+              <div class="small">04 Mar 2026</div>
+              <div class="kpis" style="margin-top:7px">
+                <div class="kpi g"><span>Total Meeting</span><b>03</b></div>
+                <div class="kpi i"><span>Event Today</span><b>01</b></div>
+                <div class="kpi y"><span>Need Approval</span><b>07</b></div>
+              </div>
+            </div>
+            <div style="padding:10px 14px 0">
+              <div class="row" style="margin-bottom:6px"><b style="font-size:12px">Today Meeting</b><span class="small">View in calendar</span></div>
+              <div class="meeting">
+                <div class="row"><b style="font-size:12px">Team Scrum</b><button class="join">Join Meet</button></div>
+                <div class="small">12:30 PM - 01:00 PM</div>
+              </div>
+              <div class="meeting">
+                <div class="row"><b style="font-size:12px">UI Review</b><button class="join">Join Meet</button></div>
+                <div class="small">01:30 PM - 02:00 PM</div>
+              </div>
+            </div>
+            <div style="padding:8px 14px 72px">
+              <div class="small" style="margin-bottom:6px">Quick Action</div>
+              <div class="quick">
+                <div class="q">Leave History</div>
+                <div class="q">Request Doc</div>
+                <div class="q">Attendance</div>
+                <div class="q">Time Card</div>
+              </div>
+            </div>
+            <nav class="nav">
+              <span class="active">Home</span>
+              <span>Log</span>
+              <span>Inbox</span>
+              <span>Docs</span>
+              <span>Profile</span>
+            </nav>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h1 class="h1">Foundation Snapshot</h1>
+      <p class="sub">Palette de base pour decliner ensuite tous les ecrans Pointa.</p>
+      <div class="foundation">
+        <div class="tile"><div class="sw sw-b"></div><b style="font-size:13px">Primary Blue</b><div class="small">Main header / CTA</div></div>
+        <div class="tile"><div class="sw sw-g"></div><b style="font-size:13px">Success Green</b><div class="small">KPI positive state</div></div>
+        <div class="tile"><div class="sw sw-i"></div><b style="font-size:13px">Info Indigo</b><div class="small">Neutral KPI info</div></div>
+        <div class="tile"><div class="sw sw-y"></div><b style="font-size:13px">Warning Yellow</b><div class="small">Attention metrics</div></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

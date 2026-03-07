@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pointa_mobile/core/theme/app_colors.dart';
 import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 
@@ -24,25 +25,49 @@ class AttendanceRecordTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isCheckIn = record.actionType == AttendanceActionType.checkIn;
-    final icon = isCheckIn ? Icons.login : Icons.logout;
+    final icon = isCheckIn ? Icons.login_rounded : Icons.logout_rounded;
     final label = isCheckIn ? 'Arrivee' : 'Depart';
     final syncSuffix = record.isPendingSync ? ' - Sync en attente' : '';
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(child: Icon(icon, size: 18)),
-      title: Text('$label - ${record.siteLabel}'),
-      subtitle: Text(
-        '${_formatDate(record.timestamp)} a ${_formatTime(record.timestamp)}$syncSuffix',
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.softBlue,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
-      trailing: const Padding(
-        padding: EdgeInsets.only(left: AppSpacing.sm),
-        child: Icon(Icons.chevron_right),
+      child: Row(
+        children: <Widget>[
+          CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Icon(
+              icon,
+              size: 18,
+              color: isCheckIn ? AppColors.success : AppColors.danger,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  '$label - ${record.siteLabel}',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${_formatDate(record.timestamp)} a ${_formatTime(record.timestamp)}$syncSuffix',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: AppColors.mutedText),
+        ],
       ),
-      titleTextStyle: theme.textTheme.bodyMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
-      subtitleTextStyle: theme.textTheme.bodySmall,
     );
   }
 }
