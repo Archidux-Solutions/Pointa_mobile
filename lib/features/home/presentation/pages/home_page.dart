@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_colors.dart';
-import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
@@ -121,156 +121,150 @@ class HomePage extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2F7),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 130),
-          children: <Widget>[
-            _HomeHeader(
-              displayName: _formatDisplayName(session),
-              onSignOut: () async {
-                await ref.read(authControllerProvider.notifier).signOut();
-              },
+      appBar: AppHomeAppBar(
+        displayName: _formatDisplayName(session),
+        onSignOut: () async {
+          await ref.read(authControllerProvider.notifier).signOut();
+        },
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
+        children: <Widget>[
+          statusAsync.when(
+            loading: () => const AppLoadingState(
+              message: 'Chargement du statut du jour...',
             ),
-            const SizedBox(height: AppSpacing.lg),
-            statusAsync.when(
-              loading: () => const AppLoadingState(
-                message: 'Chargement du statut du jour...',
-              ),
-              error: (_, _) => AppErrorState(
-                title: 'Statut indisponible',
-                message: 'Impossible de charger le statut du jour.',
-                onRetry: () => ref.invalidate(attendanceStatusProvider),
-              ),
-              data: (status) {
-                return _StatusHeroCard(
-                  title: 'Statut du jour',
-                  statusLabel: status.isCheckedIn
-                      ? 'En service'
-                      : 'Hors service',
-                  siteLabel: 'Siege Ouaga',
-                  actionLabel: status.isCheckedIn
-                      ? 'Pointer le depart'
-                      : "Pointer l'arrivee",
-                  onTap: () => context.go(AppRoutes.attendance),
-                );
-              },
+            error: (_, _) => AppErrorState(
+              title: 'Statut indisponible',
+              message: 'Impossible de charger le statut du jour.',
+              onRetry: () => ref.invalidate(attendanceStatusProvider),
             ),
-            const SizedBox(height: 18),
-            summaryAsync.when(
-              loading: () => const AppLoadingState(
-                message: 'Chargement des indicateurs...',
-              ),
-              error: (_, _) => AppErrorState(
-                title: 'Indicateurs indisponibles',
-                message: 'Impossible de charger les indicateurs du jour.',
-                onRetry: () => ref.invalidate(attendanceSummaryProvider),
-              ),
-              data: (summary) {
-                return Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: _MetricCard(
-                        title: 'Heures',
-                        value: _formatMetricMinutes(summary.workedMinutes),
-                        icon: Icons.schedule_rounded,
-                        startColor: const Color(0xFF43C1C2),
-                        endColor: const Color(0xFF2B9CAD),
-                        textColor: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _MetricCard(
-                        title: 'Retards',
-                        value: summary.lateCount.toString(),
-                        startColor: const Color(0xFFF1E2BF),
-                        endColor: const Color(0xFFE9D7B3),
-                        textColor: const Color(0xFF243154),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _MetricCard(
-                        title: 'Absences',
-                        value: summary.absenceCount.toString(),
-                        startColor: const Color(0xFFF6D987),
-                        endColor: const Color(0xFFF0CC67),
-                        textColor: const Color(0xFF243154),
-                      ),
-                    ),
-                  ],
-                );
-              },
+            data: (status) {
+              return _StatusHeroCard(
+                title: 'Statut du jour',
+                statusLabel: status.isCheckedIn ? 'En service' : 'Hors service',
+                siteLabel: 'Siege Ouaga',
+                actionLabel: status.isCheckedIn
+                    ? 'Pointer le depart'
+                    : "Pointer l'arrivee",
+                onTap: () => context.go(AppRoutes.attendance),
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          summaryAsync.when(
+            loading: () =>
+                const AppLoadingState(message: 'Chargement des indicateurs...'),
+            error: (_, _) => AppErrorState(
+              title: 'Indicateurs indisponibles',
+              message: 'Impossible de charger les indicateurs du jour.',
+              onRetry: () => ref.invalidate(attendanceSummaryProvider),
             ),
-            const SizedBox(height: 24),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.98),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFFE6E3EF)),
-                boxShadow: const <BoxShadow>[
-                  BoxShadow(
-                    color: Color(0x0A111B33),
-                    blurRadius: 26,
-                    offset: Offset(0, 12),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            data: (summary) {
+              return Row(
                 children: <Widget>[
-                  Text(
-                    'Derniers pointages',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1D2752),
+                  Expanded(
+                    child: _MetricCard(
+                      title: 'Heures',
+                      value: _formatMetricMinutes(summary.workedMinutes),
+                      icon: Icons.schedule_rounded,
+                      startColor: const Color(0xFF43C1C2),
+                      endColor: const Color(0xFF2B9CAD),
+                      textColor: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  historyAsync.when(
-                    loading: () => const AppLoadingState(
-                      message: 'Chargement des derniers pointages...',
-                      asCard: false,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _MetricCard(
+                      title: 'Retards',
+                      value: summary.lateCount.toString(),
+                      startColor: const Color(0xFFF1E2BF),
+                      endColor: const Color(0xFFE9D7B3),
+                      textColor: const Color(0xFF243154),
                     ),
-                    error: (_, _) => AppErrorState(
-                      title: 'Historique indisponible',
-                      message: 'Impossible de charger les derniers pointages.',
-                      asCard: false,
-                      onRetry: () => ref.invalidate(attendanceHistoryProvider),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _MetricCard(
+                      title: 'Absences',
+                      value: summary.absenceCount.toString(),
+                      startColor: const Color(0xFFF6D987),
+                      endColor: const Color(0xFFF0CC67),
+                      textColor: const Color(0xFF243154),
                     ),
-                    data: (history) {
-                      if (history.isEmpty) {
-                        return const AppEmptyState(
-                          title: 'Aucun pointage disponible',
-                          message: 'Vos prochaines actions apparaitront ici.',
-                          asCard: false,
-                        );
-                      }
-
-                      final groupedHistory = _groupHistory(history);
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: groupedHistory.entries.map((entry) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 18),
-                            child: _HistoryGroup(
-                              label: _formatGroupLabel(entry.key),
-                              records: entry.value,
-                              timeFormatter: _formatTime,
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
                   ),
                 ],
-              ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.98),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: const Color(0xFFE6E3EF)),
+              boxShadow: const <BoxShadow>[
+                BoxShadow(
+                  color: Color(0x0A111B33),
+                  blurRadius: 26,
+                  offset: Offset(0, 12),
+                ),
+              ],
             ),
-          ],
-        ),
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Derniers pointages',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1D2752),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                historyAsync.when(
+                  loading: () => const AppLoadingState(
+                    message: 'Chargement des derniers pointages...',
+                    asCard: false,
+                  ),
+                  error: (_, _) => AppErrorState(
+                    title: 'Historique indisponible',
+                    message: 'Impossible de charger les derniers pointages.',
+                    asCard: false,
+                    onRetry: () => ref.invalidate(attendanceHistoryProvider),
+                  ),
+                  data: (history) {
+                    if (history.isEmpty) {
+                      return const AppEmptyState(
+                        title: 'Aucun pointage disponible',
+                        message: 'Vos prochaines actions apparaitront ici.',
+                        asCard: false,
+                      );
+                    }
+
+                    final groupedHistory = _groupHistory(history);
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: groupedHistory.entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: _HistoryGroup(
+                            label: _formatGroupLabel(entry.key),
+                            records: entry.value,
+                            timeFormatter: _formatTime,
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 0,
@@ -279,108 +273,6 @@ class HomePage extends ConsumerWidget {
     );
   }
 }
-
-class _HomeHeader extends StatelessWidget {
-  const _HomeHeader({required this.displayName, required this.onSignOut});
-
-  final String displayName;
-  final Future<void> Function() onSignOut;
-
-  String _initialsFromName(String name) {
-    final tokens = name
-        .split(' ')
-        .where((token) => token.trim().isNotEmpty)
-        .take(2)
-        .toList();
-
-    if (tokens.isEmpty) {
-      return 'P';
-    }
-
-    return tokens
-        .map((token) => token.trim().substring(0, 1).toUpperCase())
-        .join();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Bonjour,',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
-                  color: const Color(0xFF253056),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                displayName,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontSize: 27,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF17224B),
-                  letterSpacing: -0.6,
-                ),
-              ),
-            ],
-          ),
-        ),
-        PopupMenuButton<_HeaderMenuAction>(
-          tooltip: 'Actions du compte',
-          offset: const Offset(0, 62),
-          onSelected: (action) async {
-            if (action == _HeaderMenuAction.signOut) {
-              await onSignOut();
-            }
-          },
-          itemBuilder: (context) => const <PopupMenuEntry<_HeaderMenuAction>>[
-            PopupMenuItem<_HeaderMenuAction>(
-              value: _HeaderMenuAction.signOut,
-              child: Text('Se deconnecter'),
-            ),
-          ],
-          child: Container(
-            width: 62,
-            height: 62,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: <Color>[Color(0xFF9FD5FF), Color(0xFF6DB6F7)],
-              ),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x1D5D81C5),
-                  blurRadius: 16,
-                  offset: Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                _initialsFromName(displayName),
-                style: const TextStyle(
-                  color: Color(0xFF12305B),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-enum _HeaderMenuAction { signOut }
 
 class _StatusHeroCard extends StatelessWidget {
   const _StatusHeroCard({

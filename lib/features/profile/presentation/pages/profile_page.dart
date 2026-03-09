@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 
@@ -300,83 +301,80 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2F7),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 130),
-          children: <Widget>[
-            _ProfileHeader(onBack: () => context.go(AppRoutes.home)),
-            const SizedBox(height: 24),
-            _ProfileHeroCard(
-              initials: _initialsFromName(displayName),
-              displayName: displayName,
-              subtitle: 'Employe Pointa',
-              onEdit: () => _openEditProfileSheet(session),
-            ),
-            const SizedBox(height: 20),
-            _ProfileInfoCard(
-              children: <Widget>[
-                _InfoRow(
-                  icon: Icons.person_outline_rounded,
-                  title: displayName,
-                  subtitle: 'Profil principal',
-                ),
-                _InfoDivider(),
-                _InfoRow(
-                  icon: Icons.call_outlined,
-                  title: phoneNumber,
-                  subtitle: email,
-                ),
-                _InfoDivider(),
-                _InfoRow(
-                  icon: Icons.badge_outlined,
-                  title: employeeCode,
-                  subtitle: 'Siege Ouaga',
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _ProfileInfoCard(
-              children: <Widget>[
-                _InfoRow(
-                  icon: Icons.mail_outline_rounded,
-                  title: email,
-                  subtitle: 'Adresse de connexion',
-                ),
-                _InfoDivider(),
-                _InfoRow(
-                  icon: Icons.verified_outlined,
-                  title: 'Compte securise',
-                  subtitle: 'Acces et donnees personnelles',
-                ),
-                const SizedBox(height: 18),
-                _ActionTile(
-                  key: const Key('profile_change_password_button'),
-                  icon: Icons.lock_outline_rounded,
-                  label: 'Changer le mot de passe',
-                  onTap: _openPasswordSheet,
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    key: const Key('profile_sign_out_button'),
-                    onPressed: _signOut,
-                    icon: const Icon(Icons.logout_rounded),
-                    label: const Text('Se deconnecter'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF5A6D9F),
-                      side: const BorderSide(color: Color(0xFFD9DDEA)),
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
+      appBar: const AppSectionAppBar(title: 'Profil'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
+        children: <Widget>[
+          _ProfileHeroCard(
+            initials: _initialsFromName(displayName),
+            displayName: displayName,
+            subtitle: 'Employe Pointa',
+            onEdit: () => _openEditProfileSheet(session),
+          ),
+          const SizedBox(height: 20),
+          _ProfileInfoCard(
+            children: <Widget>[
+              _InfoRow(
+                icon: Icons.person_outline_rounded,
+                title: displayName,
+                subtitle: 'Profil principal',
+              ),
+              _InfoDivider(),
+              _InfoRow(
+                icon: Icons.call_outlined,
+                title: phoneNumber,
+                subtitle: email,
+              ),
+              _InfoDivider(),
+              _InfoRow(
+                icon: Icons.badge_outlined,
+                title: employeeCode,
+                subtitle: 'Siege Ouaga',
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _ProfileInfoCard(
+            children: <Widget>[
+              _InfoRow(
+                icon: Icons.mail_outline_rounded,
+                title: email,
+                subtitle: 'Adresse de connexion',
+              ),
+              _InfoDivider(),
+              _InfoRow(
+                icon: Icons.verified_outlined,
+                title: 'Compte securise',
+                subtitle: 'Acces et donnees personnelles',
+              ),
+              const SizedBox(height: 18),
+              _ActionTile(
+                key: const Key('profile_change_password_button'),
+                icon: Icons.lock_outline_rounded,
+                label: 'Changer le mot de passe',
+                onTap: _openPasswordSheet,
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  key: const Key('profile_sign_out_button'),
+                  onPressed: _signOut,
+                  icon: const Icon(Icons.logout_rounded),
+                  label: const Text('Se deconnecter'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF5A6D9F),
+                    side: const BorderSide(color: Color(0xFFD9DDEA)),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
                     ),
                   ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+        ],
       ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 4,

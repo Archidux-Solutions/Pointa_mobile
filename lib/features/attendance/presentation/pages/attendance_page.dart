@@ -5,6 +5,7 @@ import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_colors.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_status.dart';
@@ -201,134 +202,128 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2F7),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 130),
-          children: <Widget>[
-            _AttendanceHeader(onBack: () => context.go(AppRoutes.home)),
-            const SizedBox(height: 24),
-            statusAsync.when(
-              loading: () => const AppLoadingState(
-                message: 'Chargement du statut de pointage...',
-              ),
-              error: (_, _) => AppErrorState(
-                title: 'Statut indisponible',
-                message: 'Impossible de charger le statut de pointage.',
-                onRetry: () => ref.invalidate(attendanceStatusProvider),
-              ),
-              data: (status) {
-                return _AttendanceHeroCard(
-                  statusText: status.isCheckedIn
-                      ? 'En service'
-                      : 'Hors service',
-                  actionText: status.isCheckedIn
-                      ? 'Pointer le depart'
-                      : "Pointer l'arrivee",
-                  actionIcon: status.isCheckedIn
-                      ? Icons.logout_rounded
-                      : Icons.login_rounded,
-                  actionIconColor: status.isCheckedIn
-                      ? const Color(0xFFE17386)
-                      : const Color(0xFF47BAA5),
-                  onPressed: _toggleAttendance,
-                  isLoading: _isSubmitting,
-                );
-              },
+      appBar: const AppSectionAppBar(title: 'Pointage'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
+        children: <Widget>[
+          statusAsync.when(
+            loading: () => const AppLoadingState(
+              message: 'Chargement du statut de pointage...',
             ),
-            const SizedBox(height: 18),
-            pendingSyncAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => AppErrorState(
-                title: 'Synchronisation indisponible',
-                message: 'Impossible de lire les actions en attente.',
-                onRetry: () =>
-                    ref.invalidate(attendancePendingSyncCountProvider),
-              ),
-              data: (pendingCount) {
-                if (pendingCount == 0) {
-                  return const SizedBox.shrink();
-                }
+            error: (_, _) => AppErrorState(
+              title: 'Statut indisponible',
+              message: 'Impossible de charger le statut de pointage.',
+              onRetry: () => ref.invalidate(attendanceStatusProvider),
+            ),
+            data: (status) {
+              return _AttendanceHeroCard(
+                statusText: status.isCheckedIn ? 'En service' : 'Hors service',
+                actionText: status.isCheckedIn
+                    ? 'Pointer le depart'
+                    : "Pointer l'arrivee",
+                actionIcon: status.isCheckedIn
+                    ? Icons.logout_rounded
+                    : Icons.login_rounded,
+                actionIconColor: status.isCheckedIn
+                    ? const Color(0xFFE17386)
+                    : const Color(0xFF47BAA5),
+                onPressed: _toggleAttendance,
+                isLoading: _isSubmitting,
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          pendingSyncAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => AppErrorState(
+              title: 'Synchronisation indisponible',
+              message: 'Impossible de lire les actions en attente.',
+              onRetry: () => ref.invalidate(attendancePendingSyncCountProvider),
+            ),
+            data: (pendingCount) {
+              if (pendingCount == 0) {
+                return const SizedBox.shrink();
+              }
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 18),
-                  child: _PendingSyncCard(
-                    pendingCount: pendingCount,
-                    isSyncing: isSyncing,
-                    onPressed: _retrySyncNow,
-                  ),
-                );
-              },
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 18),
+                child: _PendingSyncCard(
+                  pendingCount: pendingCount,
+                  isSyncing: isSyncing,
+                  onPressed: _retrySyncNow,
+                ),
+              );
+            },
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.98),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: const Color(0xFFE6E3EF)),
+              boxShadow: const <BoxShadow>[
+                BoxShadow(
+                  color: Color(0x0A111B33),
+                  blurRadius: 26,
+                  offset: Offset(0, 12),
+                ),
+              ],
             ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.98),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: const Color(0xFFE6E3EF)),
-                boxShadow: const <BoxShadow>[
-                  BoxShadow(
-                    color: Color(0x0A111B33),
-                    blurRadius: 26,
-                    offset: Offset(0, 12),
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Historique du jour',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1D2752),
                   ),
-                ],
-              ),
-              padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Historique du jour',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1D2752),
-                    ),
+                ),
+                const SizedBox(height: 18),
+                historyAsync.when(
+                  loading: () => const AppLoadingState(
+                    message: 'Chargement des dernieres actions...',
+                    asCard: false,
                   ),
-                  const SizedBox(height: 18),
-                  historyAsync.when(
-                    loading: () => const AppLoadingState(
-                      message: 'Chargement des dernieres actions...',
-                      asCard: false,
-                    ),
-                    error: (_, _) => AppErrorState(
-                      title: 'Historique indisponible',
-                      message: 'Impossible de charger les dernieres actions.',
-                      asCard: false,
-                      onRetry: () => ref.invalidate(attendanceHistoryProvider),
-                    ),
-                    data: (history) {
-                      if (history.isEmpty) {
-                        return const AppEmptyState(
-                          title: 'Aucune action de pointage',
-                          message: 'Les prochaines actions apparaitront ici.',
-                          asCard: false,
+                  error: (_, _) => AppErrorState(
+                    title: 'Historique indisponible',
+                    message: 'Impossible de charger les dernieres actions.',
+                    asCard: false,
+                    onRetry: () => ref.invalidate(attendanceHistoryProvider),
+                  ),
+                  data: (history) {
+                    if (history.isEmpty) {
+                      return const AppEmptyState(
+                        title: 'Aucune action de pointage',
+                        message: 'Les prochaines actions apparaitront ici.',
+                        asCard: false,
+                      );
+                    }
+
+                    final groups = _buildDailyGroups(
+                      history,
+                      statusAsync.asData?.value,
+                    );
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: groups.map((group) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: _AttendanceHistoryGroup(
+                            group: group,
+                            timeFormatter: _formatTime,
+                          ),
                         );
-                      }
-
-                      final groups = _buildDailyGroups(
-                        history,
-                        statusAsync.asData?.value,
-                      );
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: groups.map((group) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 18),
-                            child: _AttendanceHistoryGroup(
-                              group: group,
-                              timeFormatter: _formatTime,
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
-                ],
-              ),
+                      }).toList(),
+                    );
+                  },
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 1,

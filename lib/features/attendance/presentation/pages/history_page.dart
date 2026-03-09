@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 
@@ -200,81 +201,77 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2F7),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 130),
-          children: <Widget>[
-            _HistoryHeader(onBack: () => context.go(AppRoutes.home)),
-            const SizedBox(height: 26),
-            historyAsync.when(
-              loading: () => const AppLoadingState(
-                message: 'Chargement de l historique...',
-              ),
-              error: (_, _) => AppErrorState(
-                title: 'Erreur de chargement',
-                message:
-                    'Impossible de recuperer l historique. Reessayez dans quelques instants.',
-                onRetry: () => ref.invalidate(attendanceHistoryProvider),
-                retryButtonKey: const Key('history_retry_button'),
-              ),
-              data: (history) {
-                final effectiveRange =
-                    _selectedRange ?? _defaultRangeForHistory(history);
-                final groups = _groupHistory(history, effectiveRange);
-
-                return Column(
-                  children: <Widget>[
-                    _DateRangeCard(
-                      label:
-                          'Du ${_formatShortDate(effectiveRange.start)} au ${_formatShortDate(effectiveRange.end)}',
-                      onTap: () => _pickDateRange(effectiveRange),
-                    ),
-                    const SizedBox(height: 18),
-                    Divider(
-                      color: const Color(0xFFD9D6E3).withValues(alpha: 0.9),
-                      thickness: 1,
-                    ),
-                    const SizedBox(height: 22),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.98),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: const Color(0xFFE6E3EF)),
-                        boxShadow: const <BoxShadow>[
-                          BoxShadow(
-                            color: Color(0x0A111B33),
-                            blurRadius: 26,
-                            offset: Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-                      child: groups.isEmpty
-                          ? const AppEmptyState(
-                              title: 'Aucun pointage sur cette periode',
-                              message:
-                                  'Choisissez une autre plage pour afficher l historique.',
-                              asCard: false,
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: groups.map((group) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 18),
-                                  child: _HistoryDayCard(
-                                    group: group,
-                                    timeFormatter: _formatTime,
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                    ),
-                  ],
-                );
-              },
+      appBar: const AppSectionAppBar(title: 'Historique'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
+        children: <Widget>[
+          historyAsync.when(
+            loading: () =>
+                const AppLoadingState(message: 'Chargement de l historique...'),
+            error: (_, _) => AppErrorState(
+              title: 'Erreur de chargement',
+              message:
+                  'Impossible de recuperer l historique. Reessayez dans quelques instants.',
+              onRetry: () => ref.invalidate(attendanceHistoryProvider),
+              retryButtonKey: const Key('history_retry_button'),
             ),
-          ],
-        ),
+            data: (history) {
+              final effectiveRange =
+                  _selectedRange ?? _defaultRangeForHistory(history);
+              final groups = _groupHistory(history, effectiveRange);
+
+              return Column(
+                children: <Widget>[
+                  _DateRangeCard(
+                    label:
+                        'Du ${_formatShortDate(effectiveRange.start)} au ${_formatShortDate(effectiveRange.end)}',
+                    onTap: () => _pickDateRange(effectiveRange),
+                  ),
+                  const SizedBox(height: 18),
+                  Divider(
+                    color: const Color(0xFFD9D6E3).withValues(alpha: 0.9),
+                    thickness: 1,
+                  ),
+                  const SizedBox(height: 22),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.98),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: const Color(0xFFE6E3EF)),
+                      boxShadow: const <BoxShadow>[
+                        BoxShadow(
+                          color: Color(0x0A111B33),
+                          blurRadius: 26,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                    child: groups.isEmpty
+                        ? const AppEmptyState(
+                            title: 'Aucun pointage sur cette periode',
+                            message:
+                                'Choisissez une autre plage pour afficher l historique.',
+                            asCard: false,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: groups.map((group) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 18),
+                                child: _HistoryDayCard(
+                                  group: group,
+                                  timeFormatter: _formatTime,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 2,

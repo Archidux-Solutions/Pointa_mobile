@@ -47,40 +47,52 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   InputDecoration _inputDecoration({
     required String hintText,
     required IconData prefixIcon,
+    required bool compact,
     Widget? suffixIcon,
   }) {
     const borderColor = Color(0xFFE2DBFF);
+    final radius = compact ? 20.0 : 22.0;
+    final verticalPadding = compact ? 16.0 : 18.0;
+    final hintFontSize = compact ? 14.0 : 15.0;
+    final iconSize = compact ? 20.0 : 22.0;
 
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(
-        color: Color(0xFF9791C5),
-        fontSize: 15,
+      hintStyle: TextStyle(
+        color: const Color(0xFF9791C5),
+        fontSize: hintFontSize,
         fontWeight: FontWeight.w500,
       ),
-      prefixIcon: Icon(prefixIcon, color: const Color(0xFFA09ACD), size: 22),
+      prefixIcon: Icon(
+        prefixIcon,
+        color: const Color(0xFFA09ACD),
+        size: iconSize,
+      ),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.88),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: verticalPadding,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: borderColor),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: BorderSide(color: borderColor.withValues(alpha: 0.9)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: Color(0xFF7E88FF), width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: Color(0xFFE36E7E)),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: Color(0xFFE36E7E), width: 1.4),
       ),
     );
@@ -104,6 +116,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final compact = constraints.maxHeight < 760;
+              final semiCompact = constraints.maxHeight < 860;
+              final heroHeight = compact
+                  ? 220.0
+                  : (semiCompact ? 242.0 : 262.0);
+              final brandLogoSize = compact ? 70.0 : 80.0;
+              final brandTextSize = compact ? 30.0 : 32.0;
+              final titleSize = compact ? 25.0 : 28.0;
+              final introGap = compact ? 12.0 : 16.0;
+              final sectionGap = compact ? 24.0 : 30.0;
+              final fieldGap = compact ? 12.0 : 14.0;
+              final buttonGap = compact ? 18.0 : 22.0;
+              final socialGap = compact ? 18.0 : 24.0;
+              final footerGap = compact ? 18.0 : 24.0;
+
               return Stack(
                 children: <Widget>[
                   Positioned(
@@ -111,7 +138,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     left: -26,
                     right: -26,
                     child: Container(
-                      height: 290,
+                      height: heroHeight,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -152,54 +179,40 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                   ),
                   SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(22, 10, 22, 18),
+                    padding: const EdgeInsets.fromLTRB(22, 12, 22, 16),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight - 28,
+                        minHeight: constraints.maxHeight - 24,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: IconButton(
-                              splashRadius: 24,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () {
-                                Navigator.of(context).maybePop();
-                              },
-                              icon: const Icon(
-                                Icons.arrow_back_rounded,
-                                color: Color(0xFF7D86F7),
-                                size: 34,
-                              ),
-                            ),
+                          _PointaBrand(
+                            logoSize: brandLogoSize,
+                            textSize: brandTextSize,
                           ),
-                          const SizedBox(height: 10),
-                          const _PointaBrand(),
-                          const SizedBox(height: 40),
+                          SizedBox(height: sectionGap),
                           Text(
                             'Connexion',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.headlineSmall?.copyWith(
-                              fontSize: 28,
+                              fontSize: titleSize,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF5E5A91),
                               letterSpacing: -0.4,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: introGap),
                           Text(
                             'Connectez-vous a votre espace en toute simplicite.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: const Color(0xFF9993BF),
-                              fontSize: 15,
+                              fontSize: compact ? 14 : 15,
                               height: 1.45,
                             ),
                           ),
-                          const SizedBox(height: 34),
+                          SizedBox(height: sectionGap),
                           Form(
                             key: _formKey,
                             child: Column(
@@ -215,6 +228,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: _inputDecoration(
+                                    compact: compact,
                                     hintText: 'Adresse e-mail',
                                     prefixIcon: Icons.mail_outline_rounded,
                                   ),
@@ -225,7 +239,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: fieldGap),
                                 TextFormField(
                                   key: const Key('login_password_field'),
                                   controller: _passwordController,
@@ -236,6 +250,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: _inputDecoration(
+                                    compact: compact,
                                     hintText: 'Mot de passe',
                                     prefixIcon: Icons.lock_outline_rounded,
                                     suffixIcon: IconButton(
@@ -262,7 +277,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     _submit();
                                   },
                                 ),
-                                const SizedBox(height: 14),
+                                const SizedBox(height: 8),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
@@ -277,7 +292,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     child: const Text(
                                       'Mot de passe oublie ?',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: 14,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -295,40 +310,46 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     ),
                                   ),
                                 ],
-                                const SizedBox(height: 24),
+                                SizedBox(height: buttonGap),
                                 _PrimaryLoginButton(
                                   buttonKey: const Key('login_submit_button'),
                                   label: 'Se connecter',
                                   isLoading: authState.isLoading,
+                                  height: compact ? 54 : 58,
                                   onPressed: _submit,
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 34),
+                          SizedBox(height: socialGap),
                           const _DividerLabel(label: 'ou continuer avec'),
-                          const SizedBox(height: 26),
-                          const Row(
+                          SizedBox(height: compact ? 18 : 22),
+                          Row(
                             children: <Widget>[
-                              Expanded(
+                              const Expanded(
                                 child: _SocialButton(
                                   label: 'Google',
                                   icon: _GoogleBadge(),
+                                  verticalPadding: 14,
                                 ),
                               ),
-                              SizedBox(width: 16),
-                              Expanded(
+                              const SizedBox(width: 14),
+                              const Expanded(
                                 child: _SocialButton(
                                   label: 'Facebook',
                                   icon: _FacebookBadge(),
                                   isPrimary: true,
+                                  verticalPadding: 14,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 72),
+                          SizedBox(height: footerGap),
                           Padding(
-                            padding: const EdgeInsets.only(top: 34, bottom: 28),
+                            padding: EdgeInsets.only(
+                              top: compact ? 18 : 22,
+                              bottom: compact ? 16 : 18,
+                            ),
                             child: Divider(
                               color: const Color(
                                 0xFFD9D0F6,
@@ -363,7 +384,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 6),
                         ],
                       ),
                     ),
@@ -379,15 +400,18 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 }
 
 class _PointaBrand extends StatelessWidget {
-  const _PointaBrand();
+  const _PointaBrand({required this.logoSize, required this.textSize});
+
+  final double logoSize;
+  final double textSize;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
         SizedBox(
-          width: 88,
-          height: 88,
+          width: logoSize,
+          height: logoSize,
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
@@ -399,9 +423,9 @@ class _PointaBrand extends StatelessWidget {
                     colors: <Color>[Color(0xFF89C1FF), Color(0xFF6568F1)],
                   ).createShader(bounds);
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.location_on_rounded,
-                  size: 82,
+                  size: logoSize - 6,
                   color: Colors.white,
                 ),
               ),
@@ -422,10 +446,10 @@ class _PointaBrand extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'PointA',
           style: TextStyle(
-            fontSize: 34,
+            fontSize: textSize,
             fontWeight: FontWeight.w700,
             color: Color(0xFF5C568C),
             letterSpacing: -0.6,
@@ -441,19 +465,21 @@ class _PrimaryLoginButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     required this.isLoading,
+    required this.height,
     this.buttonKey,
   });
 
   final String label;
   final Future<void> Function() onPressed;
   final bool isLoading;
+  final double height;
   final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       key: buttonKey,
-      height: 62,
+      height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -493,7 +519,7 @@ class _PrimaryLoginButton extends StatelessWidget {
                       label,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.2,
                       ),
@@ -547,11 +573,13 @@ class _SocialButton extends StatelessWidget {
   const _SocialButton({
     required this.label,
     required this.icon,
+    required this.verticalPadding,
     this.isPrimary = false,
   });
 
   final String label;
   final Widget icon;
+  final double verticalPadding;
   final bool isPrimary;
 
   @override
@@ -587,7 +615,10 @@ class _SocialButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: () {},
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: verticalPadding,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[

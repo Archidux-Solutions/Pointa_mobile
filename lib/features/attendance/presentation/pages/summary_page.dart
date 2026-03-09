@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 
@@ -324,102 +325,98 @@ class _SummaryPageState extends ConsumerState<SummaryPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F2F7),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 130),
-          children: <Widget>[
-            _SummaryHeader(onBack: () => context.go(AppRoutes.home)),
-            const SizedBox(height: 24),
-            historyAsync.when(
-              loading: () =>
-                  const AppLoadingState(message: 'Chargement du recap...'),
-              error: (_, _) => AppErrorState(
-                title: 'Recap indisponible',
-                message:
-                    'Impossible de charger le recap des heures et retards.',
-                onRetry: () => ref.invalidate(attendanceHistoryProvider),
-                retryButtonKey: const Key('summary_retry_button'),
-              ),
-              data: (history) {
-                final effectiveRange =
-                    _selectedRange ?? _defaultRangeForSummary(history);
-                final insights = _buildInsights(history, effectiveRange);
+      appBar: const AppSectionAppBar(title: 'Recap heures & retards'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
+        children: <Widget>[
+          historyAsync.when(
+            loading: () =>
+                const AppLoadingState(message: 'Chargement du recap...'),
+            error: (_, _) => AppErrorState(
+              title: 'Recap indisponible',
+              message: 'Impossible de charger le recap des heures et retards.',
+              onRetry: () => ref.invalidate(attendanceHistoryProvider),
+              retryButtonKey: const Key('summary_retry_button'),
+            ),
+            data: (history) {
+              final effectiveRange =
+                  _selectedRange ?? _defaultRangeForSummary(history);
+              final insights = _buildInsights(history, effectiveRange);
 
-                return Column(
-                  children: <Widget>[
-                    _SummaryHeroCard(
-                      rangeLabel:
-                          'Du ${_formatShortDate(effectiveRange.start)} au ${_formatShortDate(effectiveRange.end)}',
-                      workedValue: _formatLargeDuration(insights.workedMinutes),
-                      workedCaption:
-                          '${_formatCompactDuration(insights.workedMinutes)} / ${_formatCompactDuration(insights.expectedMinutes)}',
-                      workedProgress: insights.expectedMinutes == 0
-                          ? 0
-                          : insights.workedMinutes / insights.expectedMinutes,
-                      lateValue: '${insights.lateCount}',
-                      lateCaption:
-                          '${insights.lateCount} en retard / ${insights.workingDays} jours',
-                      lateProgress: insights.workingDays == 0
-                          ? 0
-                          : insights.lateCount / insights.workingDays,
-                      onDateTap: () => _pickDateRange(effectiveRange),
+              return Column(
+                children: <Widget>[
+                  _SummaryHeroCard(
+                    rangeLabel:
+                        'Du ${_formatShortDate(effectiveRange.start)} au ${_formatShortDate(effectiveRange.end)}',
+                    workedValue: _formatLargeDuration(insights.workedMinutes),
+                    workedCaption:
+                        '${_formatCompactDuration(insights.workedMinutes)} / ${_formatCompactDuration(insights.expectedMinutes)}',
+                    workedProgress: insights.expectedMinutes == 0
+                        ? 0
+                        : insights.workedMinutes / insights.expectedMinutes,
+                    lateValue: '${insights.lateCount}',
+                    lateCaption:
+                        '${insights.lateCount} en retard / ${insights.workingDays} jours',
+                    lateProgress: insights.workingDays == 0
+                        ? 0
+                        : insights.lateCount / insights.workingDays,
+                    onDateTap: () => _pickDateRange(effectiveRange),
+                  ),
+                  const SizedBox(height: 22),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.98),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: const Color(0xFFE6E3EF)),
+                      boxShadow: const <BoxShadow>[
+                        BoxShadow(
+                          color: Color(0x0A111B33),
+                          blurRadius: 26,
+                          offset: Offset(0, 12),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 22),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.98),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: const Color(0xFFE6E3EF)),
-                        boxShadow: const <BoxShadow>[
-                          BoxShadow(
-                            color: Color(0x0A111B33),
-                            blurRadius: 26,
-                            offset: Offset(0, 12),
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                      child: insights.groups.isEmpty
-                          ? const AppEmptyState(
-                              title: 'Aucune donnee sur cette periode',
-                              message:
-                                  'Choisissez une autre plage pour afficher le recap.',
-                              asCard: false,
-                            )
-                          : Column(
-                              children: <Widget>[
-                                ...insights.groups.map((group) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 18),
-                                    child: _SummaryDayCard(
-                                      group: group,
-                                      timeFormatter: _formatTime,
-                                    ),
-                                  );
-                                }),
-                                _SummaryChartCard(
-                                  points: insights.chartPoints,
-                                  maxWorkedMinutes: math.max(
-                                    _dailyTargetMinutes,
-                                    insights.chartPoints.fold<int>(
-                                      0,
-                                      (maxMinutes, point) => math.max(
-                                        maxMinutes,
-                                        point.workedMinutes,
-                                      ),
+                    padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+                    child: insights.groups.isEmpty
+                        ? const AppEmptyState(
+                            title: 'Aucune donnee sur cette periode',
+                            message:
+                                'Choisissez une autre plage pour afficher le recap.',
+                            asCard: false,
+                          )
+                        : Column(
+                            children: <Widget>[
+                              ...insights.groups.map((group) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 18),
+                                  child: _SummaryDayCard(
+                                    group: group,
+                                    timeFormatter: _formatTime,
+                                  ),
+                                );
+                              }),
+                              _SummaryChartCard(
+                                points: insights.chartPoints,
+                                maxWorkedMinutes: math.max(
+                                  _dailyTargetMinutes,
+                                  insights.chartPoints.fold<int>(
+                                    0,
+                                    (maxMinutes, point) => math.max(
+                                      maxMinutes,
+                                      point.workedMinutes,
                                     ),
                                   ),
-                                  absenceCount: insights.absenceCount,
                                 ),
-                              ],
-                            ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
-        ),
+                                absenceCount: insights.absenceCount,
+                              ),
+                            ],
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: AppBottomNav(
         selectedIndex: 3,

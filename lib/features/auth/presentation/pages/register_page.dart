@@ -68,40 +68,52 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   InputDecoration _inputDecoration({
     required String hintText,
     required IconData prefixIcon,
+    required bool compact,
     Widget? suffixIcon,
   }) {
     const borderColor = Color(0xFFE2DBFF);
+    final radius = compact ? 20.0 : 22.0;
+    final verticalPadding = compact ? 15.0 : 18.0;
+    final hintFontSize = compact ? 14.0 : 15.0;
+    final iconSize = compact ? 20.0 : 22.0;
 
     return InputDecoration(
       hintText: hintText,
-      hintStyle: const TextStyle(
-        color: Color(0xFF9791C5),
-        fontSize: 15,
+      hintStyle: TextStyle(
+        color: const Color(0xFF9791C5),
+        fontSize: hintFontSize,
         fontWeight: FontWeight.w500,
       ),
-      prefixIcon: Icon(prefixIcon, color: const Color(0xFFA09ACD), size: 22),
+      prefixIcon: Icon(
+        prefixIcon,
+        color: const Color(0xFFA09ACD),
+        size: iconSize,
+      ),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.88),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: verticalPadding,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: borderColor),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: BorderSide(color: borderColor.withValues(alpha: 0.9)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: Color(0xFF7E88FF), width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: Color(0xFFE36E7E)),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(radius),
         borderSide: const BorderSide(color: Color(0xFFE36E7E), width: 1.4),
       ),
     );
@@ -132,6 +144,19 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final compact = constraints.maxHeight < 780;
+              final semiCompact = constraints.maxHeight < 900;
+              final heroHeight = compact
+                  ? 206.0
+                  : (semiCompact ? 226.0 : 246.0);
+              final brandLogoSize = compact ? 64.0 : 74.0;
+              final brandTextSize = compact ? 28.0 : 31.0;
+              final titleSize = compact ? 24.0 : 28.0;
+              final introGap = compact ? 10.0 : 14.0;
+              final sectionGap = compact ? 20.0 : 26.0;
+              final fieldGap = compact ? 10.0 : 14.0;
+              final footerGap = compact ? 16.0 : 20.0;
+
               return Stack(
                 children: <Widget>[
                   Positioned(
@@ -139,7 +164,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     left: -26,
                     right: -26,
                     child: Container(
-                      height: 290,
+                      height: heroHeight,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -180,52 +205,40 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     ),
                   ),
                   SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(22, 10, 22, 18),
+                    padding: const EdgeInsets.fromLTRB(22, 12, 22, 16),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight - 28,
+                        minHeight: constraints.maxHeight - 24,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: IconButton(
-                              splashRadius: 24,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () => context.go(AppRoutes.login),
-                              icon: const Icon(
-                                Icons.arrow_back_rounded,
-                                color: Color(0xFF7D86F7),
-                                size: 34,
-                              ),
-                            ),
+                          _PointaBrand(
+                            logoSize: brandLogoSize,
+                            textSize: brandTextSize,
                           ),
-                          const SizedBox(height: 10),
-                          const _PointaBrand(),
-                          const SizedBox(height: 40),
+                          SizedBox(height: sectionGap),
                           Text(
                             'Creer un compte',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.headlineSmall?.copyWith(
-                              fontSize: 28,
+                              fontSize: titleSize,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF5E5A91),
                               letterSpacing: -0.4,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          SizedBox(height: introGap),
                           Text(
                             'Creez votre compte pour un pointage simplifie.',
                             textAlign: TextAlign.center,
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: const Color(0xFF9993BF),
-                              fontSize: 15,
+                              fontSize: compact ? 14 : 15,
                               height: 1.55,
                             ),
                           ),
-                          const SizedBox(height: 34),
+                          SizedBox(height: sectionGap),
                           Form(
                             key: _formKey,
                             child: Column(
@@ -240,6 +253,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: _inputDecoration(
+                                    compact: compact,
                                     hintText: 'Nom complet',
                                     prefixIcon: Icons.person_outline_rounded,
                                   ),
@@ -250,7 +264,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: fieldGap),
                                 TextFormField(
                                   key: const Key('register_email_field'),
                                   controller: _emailController,
@@ -261,6 +275,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: _inputDecoration(
+                                    compact: compact,
                                     hintText: 'Adresse e-mail',
                                     prefixIcon: Icons.mail_outline_rounded,
                                   ),
@@ -271,7 +286,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: fieldGap),
                                 TextFormField(
                                   key: const Key('register_password_field'),
                                   controller: _passwordController,
@@ -282,6 +297,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: _inputDecoration(
+                                    compact: compact,
                                     hintText: 'Mot de passe',
                                     prefixIcon: Icons.lock_outline_rounded,
                                     suffixIcon: IconButton(
@@ -308,7 +324,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: fieldGap),
                                 TextFormField(
                                   key: const Key(
                                     'register_confirm_password_field',
@@ -321,6 +337,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                   decoration: _inputDecoration(
+                                    compact: compact,
                                     hintText: 'Confirmer le mot de passe',
                                     prefixIcon: Icons.lock_outline_rounded,
                                     suffixIcon: IconButton(
@@ -349,7 +366,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                   },
                                   onFieldSubmitted: (_) => _submit(),
                                 ),
-                                const SizedBox(height: 18),
+                                SizedBox(height: compact ? 14 : 16),
                                 GestureDetector(
                                   key: const Key('register_terms_checkbox'),
                                   onTap: _toggleTerms,
@@ -364,9 +381,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                           TextSpan(
                                             style: const TextStyle(
                                               color: Color(0xFF8F89B8),
-                                              fontSize: 15,
+                                              fontSize: 14,
                                               fontWeight: FontWeight.w500,
-                                              height: 1.7,
+                                              height: 1.5,
                                             ),
                                             children: const <InlineSpan>[
                                               TextSpan(
@@ -420,19 +437,20 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                     ),
                                   ),
                                 ],
-                                const SizedBox(height: 24),
+                                SizedBox(height: compact ? 16 : 20),
                                 _PrimaryRegisterButton(
                                   buttonKey: const Key(
                                     'register_submit_button',
                                   ),
                                   label: 'S inscrire',
                                   isLoading: authState.isLoading,
+                                  height: compact ? 54 : 58,
                                   onPressed: _submit,
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 22),
+                          SizedBox(height: compact ? 16 : 18),
                           Wrap(
                             alignment: WrapAlignment.center,
                             crossAxisAlignment: WrapCrossAlignment.center,
@@ -461,28 +479,30 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 32),
+                          SizedBox(height: footerGap),
                           const _DividerLabel(label: 'ou continuer avec'),
-                          const SizedBox(height: 26),
-                          const Row(
+                          SizedBox(height: compact ? 16 : 20),
+                          Row(
                             children: <Widget>[
-                              Expanded(
+                              const Expanded(
                                 child: _SocialButton(
                                   label: 'Google',
                                   icon: _GoogleBadge(),
+                                  verticalPadding: 13,
                                 ),
                               ),
-                              SizedBox(width: 16),
-                              Expanded(
+                              const SizedBox(width: 14),
+                              const Expanded(
                                 child: _SocialButton(
                                   label: 'Facebook',
                                   icon: _FacebookBadge(),
                                   isPrimary: true,
+                                  verticalPadding: 13,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 26),
+                          const SizedBox(height: 10),
                         ],
                       ),
                     ),
@@ -498,15 +518,18 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 }
 
 class _PointaBrand extends StatelessWidget {
-  const _PointaBrand();
+  const _PointaBrand({required this.logoSize, required this.textSize});
+
+  final double logoSize;
+  final double textSize;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
         SizedBox(
-          width: 88,
-          height: 88,
+          width: logoSize,
+          height: logoSize,
           child: Stack(
             alignment: Alignment.center,
             children: <Widget>[
@@ -518,9 +541,9 @@ class _PointaBrand extends StatelessWidget {
                     colors: <Color>[Color(0xFF89C1FF), Color(0xFF6568F1)],
                   ).createShader(bounds);
                 },
-                child: const Icon(
+                child: Icon(
                   Icons.location_on_rounded,
-                  size: 82,
+                  size: logoSize - 6,
                   color: Colors.white,
                 ),
               ),
@@ -541,10 +564,10 @@ class _PointaBrand extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'PointA',
           style: TextStyle(
-            fontSize: 34,
+            fontSize: textSize,
             fontWeight: FontWeight.w700,
             color: Color(0xFF5C568C),
             letterSpacing: -0.6,
@@ -588,19 +611,21 @@ class _PrimaryRegisterButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     required this.isLoading,
+    required this.height,
     this.buttonKey,
   });
 
   final String label;
   final Future<void> Function() onPressed;
   final bool isLoading;
+  final double height;
   final Key? buttonKey;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       key: buttonKey,
-      height: 62,
+      height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
           gradient: const LinearGradient(
@@ -636,7 +661,7 @@ class _PrimaryRegisterButton extends StatelessWidget {
                       label,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: 17,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.2,
                       ),
@@ -690,11 +715,13 @@ class _SocialButton extends StatelessWidget {
   const _SocialButton({
     required this.label,
     required this.icon,
+    required this.verticalPadding,
     this.isPrimary = false,
   });
 
   final String label;
   final Widget icon;
+  final double verticalPadding;
   final bool isPrimary;
 
   @override
@@ -730,7 +757,10 @@ class _SocialButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: () {},
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: verticalPadding,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
