@@ -13,20 +13,20 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
   var _obscurePassword = true;
 
   @override
   void initState() {
     super.initState();
-    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
     _passwordController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -38,8 +38,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     await ref
         .read(authControllerProvider.notifier)
-        .signInWithEmail(
-          email: _emailController.text,
+        .signIn(
+          phone: _phoneController.text,
           password: _passwordController.text,
         );
   }
@@ -219,9 +219,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: <Widget>[
                                 TextFormField(
-                                  key: const Key('login_email_field'),
-                                  controller: _emailController,
-                                  keyboardType: TextInputType.emailAddress,
+                                  key: const Key('login_phone_field'),
+                                  controller: _phoneController,
+                                  keyboardType: TextInputType.phone,
                                   textInputAction: TextInputAction.next,
                                   style: const TextStyle(
                                     color: Color(0xFF5F5A92),
@@ -229,12 +229,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   ),
                                   decoration: _inputDecoration(
                                     compact: compact,
-                                    hintText: 'Adresse e-mail',
-                                    prefixIcon: Icons.mail_outline_rounded,
+                                    hintText: 'Numero de telephone',
+                                    prefixIcon: Icons.call_outlined,
                                   ),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
-                                      return 'Veuillez saisir un email.';
+                                      return 'Veuillez saisir un numero.';
                                     }
                                     return null;
                                   },

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointa_mobile/features/auth/application/auth_state.dart';
-import 'package:pointa_mobile/features/auth/data/repositories/mock_auth_repository.dart';
+import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 
@@ -12,7 +12,37 @@ class AuthController extends Notifier<AuthState> {
   @override
   AuthState build() => AuthState.initial();
 
-  Future<void> signInWithEmail({
+  Future<void> signIn({required String phone, required String password}) async {
+    final repository = ref.read(authRepositoryProvider);
+    state = state.copyWith(isLoading: true, resetError: true);
+
+    try {
+      final session = await repository.signIn(phone: phone, password: password);
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        session: session,
+        isLoading: false,
+      );
+    } on AuthException catch (error) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        isLoading: false,
+        resetSession: true,
+        errorMessage: error.message,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        isLoading: false,
+        resetSession: true,
+        errorMessage: 'Connexion backend impossible. Reessayez.',
+      );
+    }
+  }
+
+  Future<void> register({
+    required String fullName,
+    required String phone,
     required String email,
     required String password,
   }) async {
@@ -20,7 +50,9 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, resetError: true);
 
     try {
-      final session = await repository.signInWithEmail(
+      final session = await repository.register(
+        fullName: fullName,
+        phone: phone,
         email: email,
         password: password,
       );
@@ -41,55 +73,37 @@ class AuthController extends Notifier<AuthState> {
         status: AuthStatus.unauthenticated,
         isLoading: false,
         resetSession: true,
-        errorMessage: 'Connexion impossible. Reessayez.',
+        errorMessage: 'Inscription backend impossible. Reessayez.',
       );
     }
   }
 
-  Future<void> registerMockUser({
-    required String fullName,
-    required String email,
-    required String password,
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
   }) async {
     final repository = ref.read(authRepositoryProvider);
-    state = state.copyWith(isLoading: true, resetError: true);
 
     try {
-      final session = await repository.signInWithEmail(
-        email: email,
-        password: password,
+      await repository.changePassword(
+        oldPassword: oldPassword,
+        newPassword: newPassword,
       );
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        session: UserSession(
-          userId: session.userId,
-          displayName: fullName.trim(),
-          email: session.email,
-          phoneNumber: session.phoneNumber,
-        ),
-        isLoading: false,
-      );
-    } on AuthException catch (error) {
-      state = state.copyWith(
-        status: AuthStatus.unauthenticated,
-        isLoading: false,
-        resetSession: true,
-        errorMessage: error.message,
-      );
+      state = state.copyWith(resetError: true);
+    } on AuthException {
+      rethrow;
     } catch (_) {
-      state = state.copyWith(
-        status: AuthStatus.unauthenticated,
-        isLoading: false,
-        resetSession: true,
-        errorMessage: 'Inscription impossible. Reessayez.',
-      );
+      throw const AuthException('Modification impossible. Reessayez.');
     }
   }
 
   Future<void> signOut() async {
     final repository = ref.read(authRepositoryProvider);
-    await repository.signOut();
-    state = AuthState.initial();
+    try {
+      await repository.signOut();
+    } finally {
+      state = AuthState.initial();
+    }
   }
 
   void updateProfile({

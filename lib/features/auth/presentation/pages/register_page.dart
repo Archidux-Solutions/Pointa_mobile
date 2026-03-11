@@ -14,6 +14,7 @@ class RegisterPage extends ConsumerStatefulWidget {
 class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _fullNameController;
+  late final TextEditingController _phoneController;
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   late final TextEditingController _confirmPasswordController;
@@ -26,6 +27,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   void initState() {
     super.initState();
     _fullNameController = TextEditingController();
+    _phoneController = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -34,6 +36,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   @override
   void dispose() {
     _fullNameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -58,8 +61,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     await ref
         .read(authControllerProvider.notifier)
-        .registerMockUser(
+        .register(
           fullName: _fullNameController.text,
+          phone: _phoneController.text,
           email: _emailController.text,
           password: _passwordController.text,
         );
@@ -260,6 +264,28 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) {
                                       return 'Veuillez saisir votre nom complet.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                SizedBox(height: fieldGap),
+                                TextFormField(
+                                  key: const Key('register_phone_field'),
+                                  controller: _phoneController,
+                                  keyboardType: TextInputType.phone,
+                                  textInputAction: TextInputAction.next,
+                                  style: const TextStyle(
+                                    color: Color(0xFF5F5A92),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  decoration: _inputDecoration(
+                                    compact: compact,
+                                    hintText: 'Numero de telephone',
+                                    prefixIcon: Icons.call_outlined,
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Veuillez saisir un numero.';
                                     }
                                     return null;
                                   },

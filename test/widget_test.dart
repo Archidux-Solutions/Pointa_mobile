@@ -3,6 +3,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pointa_mobile/app/pointa_app.dart';
+import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
+import 'package:pointa_mobile/features/auth/data/repositories/mock_auth_repository.dart';
+
+ProviderScope _appWithMockAuth() {
+  return ProviderScope(
+    overrides: [
+      authRepositoryProvider.overrideWithValue(const MockAuthRepository()),
+    ],
+    child: const PointaApp(),
+  );
+}
 
 void main() {
   testWidgets('Le flux mock de connexion redirige vers le tableau de bord', (
@@ -11,13 +22,13 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(430, 932));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(const ProviderScope(child: PointaApp()));
+    await tester.pumpWidget(_appWithMockAuth());
 
     expect(find.text('Connexion'), findsOneWidget);
 
     await tester.enterText(
-      find.byKey(const Key('login_email_field')),
-      'test@pointa.app',
+      find.byKey(const Key('login_phone_field')),
+      '+22670000000',
     );
     await tester.enterText(
       find.byKey(const Key('login_password_field')),
@@ -39,7 +50,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(430, 932));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(const ProviderScope(child: PointaApp()));
+    await tester.pumpWidget(_appWithMockAuth());
 
     await tester.ensureVisible(find.byKey(const Key('login_to_register_link')));
     await tester.tap(find.byKey(const Key('login_to_register_link')));
@@ -55,7 +66,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(430, 932));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    await tester.pumpWidget(const ProviderScope(child: PointaApp()));
+    await tester.pumpWidget(_appWithMockAuth());
 
     await tester.ensureVisible(find.byKey(const Key('login_to_register_link')));
     await tester.tap(find.byKey(const Key('login_to_register_link')));
@@ -64,6 +75,10 @@ void main() {
     await tester.enterText(
       find.byKey(const Key('register_full_name_field')),
       'Awa Ouedraogo',
+    );
+    await tester.enterText(
+      find.byKey(const Key('register_phone_field')),
+      '+22670000001',
     );
     await tester.enterText(
       find.byKey(const Key('register_email_field')),
@@ -94,11 +109,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(430, 932));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(const ProviderScope(child: PointaApp()));
+      await tester.pumpWidget(_appWithMockAuth());
 
       await tester.enterText(
-        find.byKey(const Key('login_email_field')),
-        'test@pointa.app',
+        find.byKey(const Key('login_phone_field')),
+        '+22670000000',
       );
       await tester.enterText(
         find.byKey(const Key('login_password_field')),
@@ -116,7 +131,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('profile_edit_button')), findsOneWidget);
-      expect(find.text('test@pointa.app'), findsWidgets);
+      expect(find.text('+22670000000'), findsWidgets);
       final signOutButton = tester.widget<OutlinedButton>(
         find.byKey(const Key('profile_sign_out_button')),
       );

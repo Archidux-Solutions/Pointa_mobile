@@ -5,6 +5,7 @@ import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
 import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
+import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -237,7 +238,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     key: const Key('profile_password_submit_button'),
-                    onPressed: () {
+                    onPressed: () async {
                       if (passwordController.text.trim().isEmpty ||
                           confirmController.text.trim().isEmpty) {
                         ScaffoldMessenger.of(this.context).showSnackBar(
@@ -259,12 +260,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         return;
                       }
 
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Mot de passe mis a jour.'),
-                        ),
-                      );
+                      try {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .changePassword(
+                              oldPassword: currentController.text,
+                              newPassword: passwordController.text,
+                            );
+                        if (!mounted) {
+                          return;
+                        }
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Mot de passe mis a jour.'),
+                          ),
+                        );
+                      } on AuthException catch (error) {
+                        if (!mounted) {
+                          return;
+                        }
+                        ScaffoldMessenger.of(
+                          this.context,
+                        ).showSnackBar(SnackBar(content: Text(error.message)));
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5A7DF5),
