@@ -63,6 +63,29 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> requestPasswordReset({required String phone}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+
+    if (phone.trim().isEmpty) {
+      throw const AuthException('Renseignez votre numero de telephone.');
+    }
+
+    return 'mock-reset-token';
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+
+    if (token.trim().isEmpty || newPassword.trim().isEmpty) {
+      throw const AuthException('Impossible de reinitialiser le mot de passe.');
+    }
+  }
+
+  @override
   Future<void> signOut() async {
     await Future<void>.delayed(const Duration(milliseconds: 120));
   }

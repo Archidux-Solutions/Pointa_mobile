@@ -88,6 +88,32 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<String> requestPasswordReset({required String phone}) async {
+    final payload = await _sendJson(
+      method: 'POST',
+      path: '/api/auth/forgot-password/',
+      body: <String, dynamic>{'phone': phone.trim()},
+    );
+
+    return _readRequiredString(payload, 'reset_token');
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    await _sendJson(
+      method: 'POST',
+      path: '/api/auth/reset-password/',
+      body: <String, dynamic>{
+        'token': token.trim(),
+        'new_password': newPassword,
+      },
+    );
+  }
+
+  @override
   Future<void> signOut() async {
     final accessToken = _accessToken;
     final refreshToken = _refreshToken;
@@ -158,17 +184,17 @@ class RemoteAuthRepository implements AuthRepository {
     try {
       final request = await client.openUrl(method, _uriFor(path));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-      if (body != null) {
-        final encodedBody = utf8.encode(jsonEncode(body));
-        request.headers.contentType = ContentType.json;
-        request.contentLength = encodedBody.length;
-        request.add(encodedBody);
-      }
       if (accessToken != null && accessToken.isNotEmpty) {
         request.headers.set(
           HttpHeaders.authorizationHeader,
           'Bearer $accessToken',
         );
+      }
+      if (body != null) {
+        final encodedBody = utf8.encode(jsonEncode(body));
+        request.headers.contentType = ContentType.json;
+        request.contentLength = encodedBody.length;
+        request.add(encodedBody);
       }
 
       final response = await request.close();

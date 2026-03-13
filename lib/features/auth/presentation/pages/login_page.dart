@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
+import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -42,6 +43,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           phone: _phoneController.text,
           password: _passwordController.text,
         );
+  }
+
+  Future<void> _openForgotPasswordSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _ForgotPasswordSheet(initialPhone: _phoneController.text);
+      },
+    );
   }
 
   InputDecoration _inputDecoration({
@@ -281,7 +293,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: TextButton(
-                                    onPressed: () {},
+                                    key: const Key(
+                                      'login_forgot_password_button',
+                                    ),
+                                    onPressed: _openForgotPasswordSheet,
                                     style: TextButton.styleFrom(
                                       foregroundColor: const Color(0xFF6D73E7),
                                       padding: EdgeInsets.zero,
@@ -393,6 +408,368 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               );
             },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ForgotPasswordSheet extends ConsumerStatefulWidget {
+  const _ForgotPasswordSheet({required this.initialPhone});
+
+  final String initialPhone;
+
+  @override
+  ConsumerState<_ForgotPasswordSheet> createState() =>
+      _ForgotPasswordSheetState();
+}
+
+class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
+  late final TextEditingController _phoneController;
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+  String? _resetToken;
+  String? _errorMessage;
+  bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
+  bool get _isResetStep => _resetToken != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _phoneController = TextEditingController(text: widget.initialPhone.trim());
+  }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _requestResetToken() async {
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      setState(() {
+        _errorMessage = 'Renseignez votre numero de telephone.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final token = await ref
+          .read(authControllerProvider.notifier)
+          .requestPasswordReset(phone: phone);
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _resetToken = token;
+        _isLoading = false;
+      });
+    } on AuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.message;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _submitNewPassword() async {
+    final newPassword = _passwordController.text.trim();
+    final confirmPassword = _confirmController.text.trim();
+
+    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+      setState(() {
+        _errorMessage = 'Renseignez tous les champs.';
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setState(() {
+        _errorMessage = 'Le mot de passe doit contenir au moins 6 caracteres.';
+      });
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      setState(() {
+        _errorMessage = 'Les mots de passe ne correspondent pas.';
+      });
+      return;
+    }
+
+    final token = _resetToken;
+    if (token == null || token.isEmpty) {
+      setState(() {
+        _errorMessage = 'Token de reinitialisation introuvable.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await ref
+          .read(authControllerProvider.notifier)
+          .resetPassword(token: token, newPassword: newPassword);
+
+      if (!mounted) {
+        return;
+      }
+
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pop();
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Mot de passe reinitialise. Vous pouvez vous connecter.',
+          ),
+        ),
+      );
+    } on AuthException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _errorMessage = error.message;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F5FB),
+          borderRadius: BorderRadius.circular(28),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _isResetStep
+                  ? 'Reinitialiser le mot de passe'
+                  : 'Mot de passe oublie',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1A2550),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _isResetStep
+                  ? 'Definissez un nouveau mot de passe pour votre compte.'
+                  : 'Saisissez votre numero pour lancer la reinitialisation.',
+              style: const TextStyle(
+                color: Color(0xFF8F89B8),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 18),
+            if (!_isResetStep) ...<Widget>[
+              _ForgotField(
+                key: const Key('forgot_phone_field'),
+                controller: _phoneController,
+                label: 'Numero de telephone',
+                icon: Icons.call_outlined,
+                keyboardType: TextInputType.phone,
+              ),
+            ] else ...<Widget>[
+              _ForgotField(
+                key: const Key('forgot_new_password_field'),
+                controller: _passwordController,
+                label: 'Nouveau mot de passe',
+                icon: Icons.lock_reset_rounded,
+                obscureText: _obscurePassword,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: const Color(0xFFA09ACD),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              _ForgotField(
+                key: const Key('forgot_confirm_password_field'),
+                controller: _confirmController,
+                label: 'Confirmer le mot de passe',
+                icon: Icons.verified_user_outlined,
+                obscureText: _obscureConfirmPassword,
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _obscureConfirmPassword = !_obscureConfirmPassword;
+                    });
+                  },
+                  icon: Icon(
+                    _obscureConfirmPassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: const Color(0xFFA09ACD),
+                  ),
+                ),
+              ),
+            ],
+            if (_errorMessage != null) ...<Widget>[
+              const SizedBox(height: 12),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(
+                  color: Color(0xFFE36E7E),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: <Color>[Color(0xFF7887FF), Color(0xFF6376F6)],
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: const Key('forgot_submit_button'),
+                    borderRadius: BorderRadius.circular(24),
+                    onTap: _isLoading
+                        ? null
+                        : () {
+                            if (_isResetStep) {
+                              _submitNewPassword();
+                            } else {
+                              _requestResetToken();
+                            }
+                          },
+                    child: Center(
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              _isResetStep ? 'Mettre a jour' : 'Continuer',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ForgotField extends StatelessWidget {
+  const _ForgotField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.keyboardType,
+    this.obscureText = false,
+    this.suffixIcon,
+    super.key,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final Widget? suffixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      style: const TextStyle(
+        color: Color(0xFF5F5A92),
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: InputDecoration(
+        hintText: label,
+        hintStyle: const TextStyle(
+          color: Color(0xFF9791C5),
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
+        prefixIcon: Icon(icon, color: const Color(0xFFA09ACD), size: 22),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.9),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 18,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: const BorderSide(color: Color(0xFFE2DBFF)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: BorderSide(
+            color: const Color(0xFFE2DBFF).withValues(alpha: 0.9),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(22),
+          borderSide: const BorderSide(color: Color(0xFF7E88FF), width: 1.5),
         ),
       ),
     );

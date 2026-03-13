@@ -60,6 +60,50 @@ void main() {
     expect(find.byKey(const Key('register_full_name_field')), findsOneWidget);
   });
 
+  testWidgets(
+    'Le flux mot de passe oublie ouvre puis soumet la reinitialisation',
+    (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(430, 932));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(_appWithMockAuth());
+
+      await tester.tap(find.byKey(const Key('login_forgot_password_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mot de passe oublie'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('forgot_phone_field')),
+        '+22670000009',
+      );
+      await tester.tap(find.byKey(const Key('forgot_submit_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('forgot_new_password_field')),
+        findsOneWidget,
+      );
+
+      await tester.enterText(
+        find.byKey(const Key('forgot_new_password_field')),
+        'secret456',
+      );
+      await tester.enterText(
+        find.byKey(const Key('forgot_confirm_password_field')),
+        'secret456',
+      );
+      await tester.tap(find.byKey(const Key('forgot_submit_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mot de passe oublie'), findsNothing);
+    },
+  );
+
   testWidgets('Le flux mock inscription redirige vers le tableau de bord', (
     WidgetTester tester,
   ) async {

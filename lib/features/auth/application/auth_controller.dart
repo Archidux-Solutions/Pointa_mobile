@@ -97,6 +97,33 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
+  Future<String> requestPasswordReset({required String phone}) async {
+    final repository = ref.read(authRepositoryProvider);
+
+    try {
+      return await repository.requestPasswordReset(phone: phone);
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw const AuthException('Reinitialisation impossible. Reessayez.');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    final repository = ref.read(authRepositoryProvider);
+
+    try {
+      await repository.resetPassword(token: token, newPassword: newPassword);
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw const AuthException('Reinitialisation impossible. Reessayez.');
+    }
+  }
+
   Future<void> signOut() async {
     final repository = ref.read(authRepositoryProvider);
     try {
