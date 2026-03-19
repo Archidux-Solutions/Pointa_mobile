@@ -426,44 +426,6 @@ class _SummaryPageState extends ConsumerState<SummaryPage> {
   }
 }
 
-class _SummaryHeader extends StatelessWidget {
-  const _SummaryHeader({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        IconButton(
-          onPressed: onBack,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: Color(0xFF20345E),
-            size: 34,
-          ),
-          splashRadius: 24,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        const SizedBox(width: 18),
-        Expanded(
-          child: Text(
-            'Recap heures & retards',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontSize: 25,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF18234D),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _SummaryHeroCard extends StatelessWidget {
   const _SummaryHeroCard({
     required this.rangeLabel,

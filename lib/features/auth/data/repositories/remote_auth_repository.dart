@@ -1,46 +1,48 @@
 import 'dart:convert';
-import 'dart:io';
 
+import 'package:pointa_mobile/core/network/api_exception.dart';
+import 'package:pointa_mobile/core/network/api_session_store.dart';
+import 'package:pointa_mobile/core/network/pointa_api_client.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 import 'package:pointa_mobile/features/auth/domain/repositories/auth_repository.dart';
 
 class RemoteAuthRepository implements AuthRepository {
   RemoteAuthRepository({
-    required String baseUrl,
-    HttpClient Function()? httpClientFactory,
-  }) : _baseUrl = baseUrl.trim().replaceFirst(RegExp(r'/$'), ''),
-       _httpClientFactory = httpClientFactory ?? HttpClient.new;
+    required PointaApiClient apiClient,
+    required ApiSessionStore sessionStore,
+  }) : _apiClient = apiClient,
+       _sessionStore = sessionStore;
 
-  final String _baseUrl;
-  final HttpClient Function() _httpClientFactory;
-
-  String? _accessToken;
-  String? _refreshToken;
+  final PointaApiClient _apiClient;
+  final ApiSessionStore _sessionStore;
 
   @override
   Future<UserSession> signIn({
     required String phone,
     required String password,
   }) async {
-    final payload = await _sendJson(
-      method: 'POST',
-      path: '/api/auth/login/',
-      body: <String, dynamic>{'phone': phone.trim(), 'password': password},
-    );
+    try {
+      final payload = await _apiClient.sendJson(
+        method: 'POST',
+        path: '/api/auth/login/',
+        body: <String, dynamic>{'phone': phone.trim(), 'password': password},
+      );
 
-    final accessToken = _readRequiredString(payload, 'access');
-    final refreshToken = _readRequiredString(payload, 'refresh');
-    final userId = _extractUserId(accessToken);
-    final session = await _fetchSession(
-      accessToken: accessToken,
-      fallbackPhone: phone.trim(),
-      userId: userId,
-    );
+      final accessToken = _readRequiredString(payload, 'access');
+      final refreshToken = _readRequiredString(payload, 'refresh');
+      final userId = _extractUserId(accessToken);
 
-    _accessToken = accessToken;
-    _refreshToken = refreshToken;
-    return session;
+      _sessionStore.update(
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+
+      return _fetchSession(fallbackPhone: phone.trim(), userId: userId);
+    } on ApiException catch (error) {
+      _sessionStore.clear();
+      throw AuthException(error.message);
+    }
   }
 
   @override
@@ -50,20 +52,24 @@ class RemoteAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final name = _splitName(fullName);
-    await _sendJson(
-      method: 'POST',
-      path: '/api/auth/register/',
-      body: <String, dynamic>{
-        'phone': phone.trim(),
-        'email': email.trim(),
-        'first_name': name.firstName,
-        'last_name': name.lastName,
-        'password': password,
-      },
-    );
+    try {
+      final name = _splitName(fullName);
+      await _apiClient.sendJson(
+        method: 'POST',
+        path: '/api/auth/register/',
+        body: <String, dynamic>{
+          'phone': phone.trim(),
+          'email': email.trim(),
+          'first_name': name.firstName,
+          'last_name': name.lastName,
+          'password': password,
+        },
+      );
 
-    return signIn(phone: phone, password: password);
+      return signIn(phone: phone, password: password);
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
+    }
   }
 
   @override
@@ -71,31 +77,38 @@ class RemoteAuthRepository implements AuthRepository {
     required String oldPassword,
     required String newPassword,
   }) async {
-    final accessToken = _accessToken;
-    if (accessToken == null) {
+    if (_sessionStore.accessToken == null) {
       throw const AuthException('Session expiree. Reconnectez-vous.');
     }
 
-    await _sendJson(
-      method: 'POST',
-      path: '/api/auth/change-password/',
-      body: <String, dynamic>{
-        'old_password': oldPassword,
-        'new_password': newPassword,
-      },
-      accessToken: accessToken,
-    );
+    try {
+      await _apiClient.sendJson(
+        method: 'POST',
+        path: '/api/auth/change-password/',
+        body: <String, dynamic>{
+          'old_password': oldPassword,
+          'new_password': newPassword,
+        },
+        authenticated: true,
+      );
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
+    }
   }
 
   @override
   Future<String> requestPasswordReset({required String phone}) async {
-    final payload = await _sendJson(
-      method: 'POST',
-      path: '/api/auth/forgot-password/',
-      body: <String, dynamic>{'phone': phone.trim()},
-    );
+    try {
+      final payload = await _apiClient.sendJson(
+        method: 'POST',
+        path: '/api/auth/forgot-password/',
+        body: <String, dynamic>{'phone': phone.trim()},
+      );
 
-    return _readRequiredString(payload, 'reset_token');
+      return _readRequiredString(payload, 'reset_token');
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
+    }
   }
 
   @override
@@ -103,129 +116,80 @@ class RemoteAuthRepository implements AuthRepository {
     required String token,
     required String newPassword,
   }) async {
-    await _sendJson(
-      method: 'POST',
-      path: '/api/auth/reset-password/',
-      body: <String, dynamic>{
-        'token': token.trim(),
-        'new_password': newPassword,
-      },
-    );
+    try {
+      await _apiClient.sendJson(
+        method: 'POST',
+        path: '/api/auth/reset-password/',
+        body: <String, dynamic>{
+          'token': token.trim(),
+          'new_password': newPassword,
+        },
+      );
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
+    }
   }
 
   @override
   Future<void> signOut() async {
-    final accessToken = _accessToken;
-    final refreshToken = _refreshToken;
+    final hasSession =
+        (_sessionStore.accessToken?.isNotEmpty ?? false) &&
+        (_sessionStore.refreshToken?.isNotEmpty ?? false);
 
-    _accessToken = null;
-    _refreshToken = null;
-
-    if (accessToken == null || refreshToken == null) {
+    if (!hasSession) {
+      _sessionStore.clear();
       return;
     }
 
     try {
-      await _sendJson(
+      await _apiClient.sendJson(
         method: 'POST',
         path: '/api/auth/logout/',
-        body: <String, dynamic>{'refresh': refreshToken},
-        accessToken: accessToken,
+        body: <String, dynamic>{'refresh': _sessionStore.refreshToken},
+        authenticated: true,
       );
-    } catch (_) {
+    } on ApiException {
       // Keep local sign-out resilient even if the remote session revocation fails.
+    } finally {
+      _sessionStore.clear();
     }
   }
 
   Future<UserSession> _fetchSession({
-    required String accessToken,
     required String fallbackPhone,
     required String userId,
   }) async {
-    final payload = await _sendJson(
-      method: 'GET',
-      path: '/api/auth/me/',
-      accessToken: accessToken,
-    );
-
-    if (payload is! Map<String, dynamic>) {
-      throw const AuthException('Profil utilisateur introuvable.');
-    }
-
-    final userMap = payload;
-    final responseUserId = '${userMap['id'] ?? ''}'.trim();
-    if (responseUserId.isNotEmpty && responseUserId != userId) {
-      throw const AuthException('Profil utilisateur incoherent.');
-    }
-
-    final firstName = (userMap['first_name'] as String?)?.trim() ?? '';
-    final lastName = (userMap['last_name'] as String?)?.trim() ?? '';
-    final displayName = '$firstName $lastName'.trim();
-
-    return UserSession(
-      userId: userId,
-      displayName: displayName.isEmpty ? 'Membre Pointa' : displayName,
-      email: (userMap['email'] as String?)?.trim() ?? '',
-      phoneNumber: (userMap['phone'] as String?)?.trim().isNotEmpty == true
-          ? (userMap['phone'] as String).trim()
-          : fallbackPhone,
-    );
-  }
-
-  Future<dynamic> _sendJson({
-    required String method,
-    required String path,
-    Map<String, dynamic>? body,
-    String? accessToken,
-  }) async {
-    final client = _httpClientFactory();
     try {
-      final request = await client.openUrl(method, _uriFor(path));
-      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
-      if (accessToken != null && accessToken.isNotEmpty) {
-        request.headers.set(
-          HttpHeaders.authorizationHeader,
-          'Bearer $accessToken',
-        );
-      }
-      if (body != null) {
-        final encodedBody = utf8.encode(jsonEncode(body));
-        request.headers.contentType = ContentType.json;
-        request.contentLength = encodedBody.length;
-        request.add(encodedBody);
-      }
-
-      final response = await request.close();
-      final responseBody = await utf8.decoder.bind(response).join();
-      final payload = responseBody.isEmpty ? null : jsonDecode(responseBody);
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        return payload;
-      }
-
-      throw AuthException(_errorMessageFromPayload(payload));
-    } on SocketException {
-      throw const AuthException(
-        'Serveur Pointa injoignable. Verifiez l adresse API.',
+      final payload = await _apiClient.sendJson(
+        method: 'GET',
+        path: '/api/auth/me/',
+        authenticated: true,
       );
-    } on HandshakeException {
-      throw const AuthException(
-        'Connexion securisee impossible avec le serveur Pointa.',
+
+      if (payload is! Map<String, dynamic>) {
+        throw const AuthException('Profil utilisateur introuvable.');
+      }
+
+      final responseUserId = '${payload['id'] ?? ''}'.trim();
+      if (responseUserId.isNotEmpty && responseUserId != userId) {
+        throw const AuthException('Profil utilisateur incoherent.');
+      }
+
+      final firstName = (payload['first_name'] as String?)?.trim() ?? '';
+      final lastName = (payload['last_name'] as String?)?.trim() ?? '';
+      final displayName = '$firstName $lastName'.trim();
+
+      return UserSession(
+        userId: userId,
+        displayName: displayName.isEmpty ? 'Membre Pointa' : displayName,
+        email: (payload['email'] as String?)?.trim() ?? '',
+        phoneNumber: (payload['phone'] as String?)?.trim().isNotEmpty == true
+            ? (payload['phone'] as String).trim()
+            : fallbackPhone,
       );
-    } on FormatException {
-      throw const AuthException('Reponse backend invalide.');
-    } on AuthException {
-      rethrow;
-    } catch (_) {
-      throw const AuthException('Operation impossible. Reessayez.');
-    } finally {
-      client.close(force: true);
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
     }
-  }
-
-  Uri _uriFor(String path) {
-    final normalizedPath = path.startsWith('/') ? path : '/$path';
-    return Uri.parse('$_baseUrl$normalizedPath');
   }
 
   String _readRequiredString(dynamic payload, String key) {
@@ -239,83 +203,52 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   String _extractUserId(String accessToken) {
-    final segments = accessToken.split('.');
-    if (segments.length < 2) {
-      throw const AuthException('Jeton utilisateur invalide.');
-    }
-
-    final normalizedPayload = base64Url.normalize(segments[1]);
-    final decodedPayload = utf8.decode(base64Url.decode(normalizedPayload));
-    final payload = jsonDecode(decodedPayload);
-    if (payload is! Map<String, dynamic>) {
-      throw const AuthException('Jeton utilisateur invalide.');
-    }
-
-    final userId = payload['user_id']?.toString().trim();
-    if (userId == null || userId.isEmpty) {
-      throw const AuthException('Jeton utilisateur invalide.');
-    }
-
-    return userId;
-  }
-
-  String _errorMessageFromPayload(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      final directMessage =
-          payload['error']?.toString() ??
-          payload['detail']?.toString() ??
-          payload['message']?.toString();
-      if (directMessage != null && directMessage.trim().isNotEmpty) {
-        return directMessage.trim();
+    try {
+      final parts = accessToken.split('.');
+      if (parts.length != 3) {
+        throw const AuthException('Token backend invalide.');
       }
 
-      for (final value in payload.values) {
-        final nestedMessage = _errorMessageFromPayload(value);
-        if (nestedMessage.isNotEmpty) {
-          return nestedMessage;
+      final payload = parts[1];
+      final normalizedPayload = base64Url.normalize(payload);
+      final decodedPayload = utf8.decode(base64Url.decode(normalizedPayload));
+      final jwtMap = jsonDecode(decodedPayload);
+
+      if (jwtMap is Map<String, dynamic>) {
+        final userId = jwtMap['user_id']?.toString().trim();
+        if (userId != null && userId.isNotEmpty) {
+          return userId;
         }
       }
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw const AuthException('Token backend invalide.');
     }
 
-    if (payload is List && payload.isNotEmpty) {
-      final message = _errorMessageFromPayload(payload.first);
-      if (message.isNotEmpty) {
-        return message;
-      }
-    }
-
-    final message = payload?.toString().trim();
-    if (message != null && message.isNotEmpty) {
-      return message;
-    }
-
-    return 'Requete backend refusee.';
+    throw const AuthException('Identifiant utilisateur absent du token.');
   }
 
-  _SplitName _splitName(String fullName) {
-    final tokens = fullName
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((token) => token.isNotEmpty)
-        .toList();
-
-    if (tokens.isEmpty) {
-      return const _SplitName(firstName: 'Utilisateur', lastName: 'Pointa');
+  _NameParts _splitName(String fullName) {
+    final normalized = fullName.trim().replaceAll(RegExp(r'\s+'), ' ');
+    if (normalized.isEmpty) {
+      return const _NameParts(firstName: 'Pointa', lastName: 'Utilisateur');
     }
 
-    if (tokens.length == 1) {
-      return _SplitName(firstName: tokens.first, lastName: tokens.first);
+    final segments = normalized.split(' ');
+    if (segments.length == 1) {
+      return _NameParts(firstName: segments.first, lastName: 'Pointa');
     }
 
-    return _SplitName(
-      firstName: tokens.first,
-      lastName: tokens.skip(1).join(' '),
+    return _NameParts(
+      firstName: segments.first,
+      lastName: segments.sublist(1).join(' '),
     );
   }
 }
 
-class _SplitName {
-  const _SplitName({required this.firstName, required this.lastName});
+class _NameParts {
+  const _NameParts({required this.firstName, required this.lastName});
 
   final String firstName;
   final String lastName;

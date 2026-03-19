@@ -143,7 +143,7 @@ class HomePage extends ConsumerWidget {
               return _StatusHeroCard(
                 title: 'Statut du jour',
                 statusLabel: status.isCheckedIn ? 'En service' : 'Hors service',
-                siteLabel: 'Siege Ouaga',
+                siteLabel: status.siteLabel,
                 actionLabel: status.isCheckedIn
                     ? 'Pointer le depart'
                     : "Pointer l'arrivee",

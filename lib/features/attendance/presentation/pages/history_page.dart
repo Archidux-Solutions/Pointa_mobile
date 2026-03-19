@@ -281,40 +281,6 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 }
 
-class _HistoryHeader extends StatelessWidget {
-  const _HistoryHeader({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        IconButton(
-          onPressed: onBack,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: Color(0xFF20345E),
-            size: 34,
-          ),
-          splashRadius: 24,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        const SizedBox(width: 18),
-        Text(
-          'Historique',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontSize: 25,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF18234D),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _DateRangeCard extends StatelessWidget {
   const _DateRangeCard({required this.label, required this.onTap});
 

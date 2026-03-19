@@ -260,6 +260,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         return;
                       }
 
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(this.context);
+
                       try {
                         await ref
                             .read(authControllerProvider.notifier)
@@ -270,8 +273,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         if (!mounted) {
                           return;
                         }
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(this.context).showSnackBar(
+                        navigator.pop();
+                        messenger.showSnackBar(
                           const SnackBar(
                             content: Text('Mot de passe mis a jour.'),
                           ),
@@ -280,9 +283,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         if (!mounted) {
                           return;
                         }
-                        ScaffoldMessenger.of(
-                          this.context,
-                        ).showSnackBar(SnackBar(content: Text(error.message)));
+                        messenger.showSnackBar(
+                          SnackBar(content: Text(error.message)),
+                        );
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -399,40 +402,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         selectedIndex: 4,
         onSelected: (index) => _handleBottomNavSelection(context, index),
       ),
-    );
-  }
-}
-
-class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        IconButton(
-          onPressed: onBack,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: Color(0xFF20345E),
-            size: 34,
-          ),
-          splashRadius: 24,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        const SizedBox(width: 18),
-        Text(
-          'Profil',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontSize: 25,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF18234D),
-          ),
-        ),
-      ],
     );
   }
 }

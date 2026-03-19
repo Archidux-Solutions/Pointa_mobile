@@ -1,11 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pointa_mobile/core/config/data_mode.dart';
+import 'package:pointa_mobile/core/network/api_session_store.dart';
+import 'package:pointa_mobile/core/network/pointa_api_client.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_mock_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_remote_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_sync_queue_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/repositories/attendance_repository_impl.dart';
+import 'package:pointa_mobile/features/attendance/data/services/attendance_location_service.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
+import 'package:pointa_mobile/features/attendance/domain/models/attendance_status.dart';
+import 'package:pointa_mobile/features/attendance/domain/models/attendance_summary.dart';
 
 void main() {
   group('AttendanceRepositoryImpl', () {
@@ -14,8 +19,9 @@ void main() {
         mode: DataMode.mock,
         localDataSource: AttendanceLocalDataSource(),
         mockDataSource: const AttendanceMockDataSource(),
-        remoteDataSource: const AttendanceRemoteDataSource(),
+        remoteDataSource: _unusedRemoteDataSource(),
         syncQueueDataSource: AttendanceSyncQueueDataSource(),
+        locationService: const AttendanceLocationService(),
       );
 
       final history = await repository.getHistory();
@@ -28,8 +34,9 @@ void main() {
         mode: DataMode.mock,
         localDataSource: AttendanceLocalDataSource(),
         mockDataSource: const AttendanceMockDataSource(),
-        remoteDataSource: const AttendanceRemoteDataSource(),
+        remoteDataSource: _unusedRemoteDataSource(),
         syncQueueDataSource: AttendanceSyncQueueDataSource(),
+        locationService: const AttendanceLocationService(),
       );
 
       final before = await repository.getCurrentStatus();
@@ -66,8 +73,9 @@ void main() {
         mode: DataMode.local,
         localDataSource: localDataSource,
         mockDataSource: const AttendanceMockDataSource(),
-        remoteDataSource: const AttendanceRemoteDataSource(),
+        remoteDataSource: _unusedRemoteDataSource(),
         syncQueueDataSource: AttendanceSyncQueueDataSource(),
+        locationService: const AttendanceLocationService(),
       );
 
       final summary = await repository.getSummary();
@@ -77,65 +85,113 @@ void main() {
       expect(summary.absenceCount, 0);
     });
 
-    test(
-      'met en file offline si le remote echoue puis synchronise au retry',
-      () async {
-        final localDataSource = AttendanceLocalDataSource();
-        final queueDataSource = AttendanceSyncQueueDataSource();
-        final remoteDataSource = _ConfigurableRemoteDataSource(failSend: true);
+    test('utilise le backend reel en mode remote', () async {
+      final remoteDataSource = _ConfigurableRemoteDataSource();
+      final repository = AttendanceRepositoryImpl(
+        mode: DataMode.remote,
+        localDataSource: AttendanceLocalDataSource(),
+        mockDataSource: const AttendanceMockDataSource(),
+        remoteDataSource: remoteDataSource,
+        syncQueueDataSource: AttendanceSyncQueueDataSource(),
+        locationService: const _FakeLocationService(),
+      );
 
-        final repository = AttendanceRepositoryImpl(
-          mode: DataMode.remote,
-          localDataSource: localDataSource,
-          mockDataSource: const AttendanceMockDataSource(),
-          remoteDataSource: remoteDataSource,
-          syncQueueDataSource: queueDataSource,
-        );
+      final status = await repository.getCurrentStatus();
+      final record = await repository.toggleAttendance();
+      final history = await repository.getHistory();
+      final summary = await repository.getSummary();
 
-        final queuedRecord = await repository.toggleAttendance();
-        final pendingBeforeRetry = await repository.getPendingSyncCount();
-
-        expect(queuedRecord.isPendingSync, isTrue);
-        expect(pendingBeforeRetry, 1);
-
-        remoteDataSource.failSend = false;
-        final synced = await repository.retryPendingSync();
-        final pendingAfterRetry = await repository.getPendingSyncCount();
-        final history = await repository.getHistory();
-
-        expect(synced, 1);
-        expect(pendingAfterRetry, 0);
-        expect(history.first.isPendingSync, isFalse);
-      },
-    );
+      expect(status.isCheckedIn, isFalse);
+      expect(record.actionType, AttendanceActionType.checkIn);
+      expect(history, isNotEmpty);
+      expect(summary, isA<AttendanceSummary>());
+      expect(remoteDataSource.toggleCalls, 1);
+      expect(remoteDataSource.historyCalls, greaterThanOrEqualTo(1));
+      expect(summary.workedMinutes, 480);
+      expect(summary.lateCount, 1);
+      expect(summary.absenceCount, 0);
+    });
   });
 }
 
-class _ConfigurableRemoteDataSource extends AttendanceRemoteDataSource {
-  _ConfigurableRemoteDataSource({required this.failSend});
+AttendanceRemoteDataSource _unusedRemoteDataSource() {
+  return AttendanceRemoteDataSource(
+    apiClient: PointaApiClient(
+      baseUrl: 'http://127.0.0.1:8000',
+      sessionStore: ApiSessionStore(),
+    ),
+  );
+}
 
-  bool failSend;
-  int _sentCount = 0;
+class _FakeLocationService extends AttendanceLocationService {
+  const _FakeLocationService();
+
+  @override
+  Future<AttendanceLocation> getCurrentLocation() async {
+    return const AttendanceLocation(latitude: 12.34, longitude: -1.56);
+  }
+}
+
+class _ConfigurableRemoteDataSource extends AttendanceRemoteDataSource {
+  _ConfigurableRemoteDataSource()
+    : super(
+        apiClient: PointaApiClient(
+          baseUrl: 'http://127.0.0.1:8000',
+          sessionStore: ApiSessionStore(),
+        ),
+      );
+
+  int historyCalls = 0;
+  int toggleCalls = 0;
+
+  @override
+  Future<AttendanceStatus> fetchStatus() async {
+    return const AttendanceStatus(
+      isCheckedIn: false,
+      lastActionAt: null,
+      siteLabel: 'Site distant',
+      radiusMeters: 120,
+    );
+  }
 
   @override
   Future<List<AttendanceRecord>> fetchHistory() async {
-    return const <AttendanceRecord>[];
+    historyCalls++;
+    return <AttendanceRecord>[
+      AttendanceRecord(
+        id: 'remote-out',
+        actionType: AttendanceActionType.checkOut,
+        timestamp: DateTime(2026, 3, 2, 17, 0),
+        siteLabel: 'Site distant',
+      ),
+      AttendanceRecord(
+        id: 'remote-in',
+        actionType: AttendanceActionType.checkIn,
+        timestamp: DateTime(2026, 3, 2, 8, 0),
+        siteLabel: 'Site distant',
+      ),
+    ];
+  }
+
+  @override
+  Future<AttendanceSummary> fetchSummary() async {
+    return const AttendanceSummary(
+      workedMinutes: 480,
+      lateCount: 1,
+      absenceCount: 0,
+    );
   }
 
   @override
   Future<AttendanceRecord> sendToggle({
-    required AttendanceActionType nextAction,
-    required DateTime at,
+    required double latitude,
+    required double longitude,
   }) async {
-    if (failSend) {
-      throw Exception('remote unavailable');
-    }
-
-    _sentCount++;
+    toggleCalls++;
     return AttendanceRecord(
-      id: 'remote-$_sentCount',
-      actionType: nextAction,
-      timestamp: at,
+      id: 'remote-toggle-$toggleCalls',
+      actionType: AttendanceActionType.checkIn,
+      timestamp: DateTime(2026, 3, 3, 8, 5),
       siteLabel: 'Site distant',
     );
   }

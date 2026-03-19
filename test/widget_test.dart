@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/widgets.dart';
 import 'package:pointa_mobile/app/pointa_app.dart';
+import 'package:pointa_mobile/core/config/data_mode.dart';
+import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/mock_auth_repository.dart';
 
@@ -10,6 +11,7 @@ ProviderScope _appWithMockAuth() {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(const MockAuthRepository()),
+      dataModeProvider.overrideWithValue(DataMode.mock),
     ],
     child: const PointaApp(),
   );

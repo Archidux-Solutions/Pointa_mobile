@@ -50,5 +50,7 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Pointa utilise votre position pour verifier que le pointage est effectue dans la zone autorisee.</string>
 </dict>
 </plist>

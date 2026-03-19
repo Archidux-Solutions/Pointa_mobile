@@ -7,6 +7,7 @@ import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
 import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
+import 'package:pointa_mobile/features/attendance/domain/exceptions/attendance_exception.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_status.dart';
 
@@ -45,6 +46,13 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
+    } on AttendanceException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (_) {
       if (!mounted) {
         return;
@@ -218,6 +226,8 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
             data: (status) {
               return _AttendanceHeroCard(
                 statusText: status.isCheckedIn ? 'En service' : 'Hors service',
+                siteLabel: status.siteLabel,
+                radiusMeters: status.radiusMeters,
                 actionText: status.isCheckedIn
                     ? 'Pointer le depart'
                     : "Pointer l'arrivee",
@@ -333,43 +343,11 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
   }
 }
 
-class _AttendanceHeader extends StatelessWidget {
-  const _AttendanceHeader({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        IconButton(
-          onPressed: onBack,
-          icon: const Icon(
-            Icons.arrow_back_rounded,
-            color: Color(0xFF20345E),
-            size: 34,
-          ),
-          splashRadius: 24,
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-        ),
-        const SizedBox(width: 18),
-        Text(
-          'Pointage',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-            fontSize: 25,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF18234D),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _AttendanceHeroCard extends StatelessWidget {
   const _AttendanceHeroCard({
     required this.statusText,
+    required this.siteLabel,
+    required this.radiusMeters,
     required this.actionText,
     required this.actionIcon,
     required this.actionIconColor,
@@ -378,6 +356,8 @@ class _AttendanceHeroCard extends StatelessWidget {
   });
 
   final String statusText;
+  final String siteLabel;
+  final int? radiusMeters;
   final String actionText;
   final IconData actionIcon;
   final Color actionIconColor;
@@ -493,7 +473,7 @@ class _AttendanceHeroCard extends StatelessWidget {
                             children: <Widget>[
                               Flexible(
                                 child: Text(
-                                  'Zone : Siege Ouaga',
+                                  'Zone : $siteLabel',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: Theme.of(context).textTheme.bodyMedium
@@ -506,22 +486,24 @@ class _AttendanceHeroCard extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Icon(
-                                Icons.location_on_rounded,
-                                color: Colors.white70,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Rayon 60 m',
-                                style: Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.84,
+                              if (radiusMeters != null) ...<Widget>[
+                                const Icon(
+                                  Icons.location_on_rounded,
+                                  color: Colors.white70,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Rayon $radiusMeters m',
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.84,
+                                        ),
+                                        fontSize: 17,
                                       ),
-                                      fontSize: 17,
-                                    ),
-                              ),
+                                ),
+                              ],
                             ],
                           ),
                         ],
