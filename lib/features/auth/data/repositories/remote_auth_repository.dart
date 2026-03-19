@@ -133,7 +133,7 @@ class RemoteAuthRepository implements AuthRepository {
         accessToken: accessToken,
       );
     } catch (_) {
-      // The backend logout currently returns 400 if token blacklisting is not configured.
+      // Keep local sign-out resilient even if the remote session revocation fails.
     }
   }
 
@@ -144,21 +144,19 @@ class RemoteAuthRepository implements AuthRepository {
   }) async {
     final payload = await _sendJson(
       method: 'GET',
-      path: '/api/auth/users/',
+      path: '/api/auth/me/',
       accessToken: accessToken,
     );
 
-    if (payload is! List) {
+    if (payload is! Map<String, dynamic>) {
       throw const AuthException('Profil utilisateur introuvable.');
     }
 
-    final userMap = payload
-        .cast<dynamic>()
-        .whereType<Map<String, dynamic>>()
-        .firstWhere(
-          (user) => '${user['id'] ?? ''}' == userId,
-          orElse: () => <String, dynamic>{},
-        );
+    final userMap = payload;
+    final responseUserId = '${userMap['id'] ?? ''}'.trim();
+    if (responseUserId.isNotEmpty && responseUserId != userId) {
+      throw const AuthException('Profil utilisateur incoherent.');
+    }
 
     final firstName = (userMap['first_name'] as String?)?.trim() ?? '';
     final lastName = (userMap['last_name'] as String?)?.trim() ?? '';
