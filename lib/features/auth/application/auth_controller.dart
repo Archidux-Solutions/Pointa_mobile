@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointa_mobile/features/auth/application/auth_state.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
-import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
   AuthController.new,
@@ -133,23 +132,29 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  void updateProfile({
+  Future<void> updateProfile({
     required String displayName,
     required String email,
     required String phoneNumber,
-  }) {
+  }) async {
     final session = state.session;
     if (session == null) {
       return;
     }
 
-    state = state.copyWith(
-      session: UserSession(
-        userId: session.userId,
-        displayName: displayName.trim(),
-        email: email.trim(),
-        phoneNumber: phoneNumber.trim(),
-      ),
-    );
+    final repository = ref.read(authRepositoryProvider);
+
+    try {
+      final updatedSession = await repository.updateProfile(
+        fullName: displayName,
+        email: email,
+        phone: phoneNumber,
+      );
+      state = state.copyWith(session: updatedSession, resetError: true);
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw const AuthException('Mise a jour du profil impossible. Reessayez.');
+    }
   }
 }

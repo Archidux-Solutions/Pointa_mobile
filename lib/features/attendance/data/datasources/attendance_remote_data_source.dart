@@ -15,7 +15,7 @@ class AttendanceRemoteDataSource {
     try {
       final payload = await _apiClient.sendJson(
         method: 'GET',
-        path: '/api/today/',
+        path: '/api/mobile/today/',
         authenticated: true,
       );
 
@@ -51,7 +51,7 @@ class AttendanceRemoteDataSource {
     try {
       final payload = await _apiClient.sendJson(
         method: 'GET',
-        path: '/api/history/',
+        path: '/api/mobile/history/',
         authenticated: true,
       );
 
@@ -109,7 +109,7 @@ class AttendanceRemoteDataSource {
     try {
       final payload = await _apiClient.sendJson(
         method: 'GET',
-        path: '/api/dashboard/stats/',
+        path: '/api/mobile/summary/',
         authenticated: true,
       );
 
@@ -130,12 +130,19 @@ class AttendanceRemoteDataSource {
   Future<AttendanceRecord> sendToggle({
     required double latitude,
     required double longitude,
+    required double accuracyMeters,
+    required DateTime capturedAt,
   }) async {
     try {
       final payload = await _apiClient.sendJson(
         method: 'POST',
-        path: '/api/attendances/punch/',
-        body: <String, dynamic>{'latitude': latitude, 'longitude': longitude},
+        path: '/api/mobile/punch/',
+        body: <String, dynamic>{
+          'latitude': latitude,
+          'longitude': longitude,
+          'accuracy': accuracyMeters,
+          'captured_at': capturedAt.toUtc().toIso8601String(),
+        },
         authenticated: true,
       );
 

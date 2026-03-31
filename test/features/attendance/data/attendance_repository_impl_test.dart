@@ -128,7 +128,12 @@ class _FakeLocationService extends AttendanceLocationService {
 
   @override
   Future<AttendanceLocation> getCurrentLocation() async {
-    return const AttendanceLocation(latitude: 12.34, longitude: -1.56);
+    return AttendanceLocation(
+      latitude: 12.34,
+      longitude: -1.56,
+      accuracyMeters: 8.5,
+      capturedAt: DateTime.utc(2026, 3, 3, 8, 5),
+    );
   }
 }
 
@@ -186,8 +191,12 @@ class _ConfigurableRemoteDataSource extends AttendanceRemoteDataSource {
   Future<AttendanceRecord> sendToggle({
     required double latitude,
     required double longitude,
+    required double accuracyMeters,
+    required DateTime capturedAt,
   }) async {
     toggleCalls++;
+    expect(accuracyMeters, 8.5);
+    expect(capturedAt, DateTime.utc(2026, 3, 3, 8, 5));
     return AttendanceRecord(
       id: 'remote-toggle-$toggleCalls',
       actionType: AttendanceActionType.checkIn,

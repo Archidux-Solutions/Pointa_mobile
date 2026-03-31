@@ -15,6 +15,12 @@ abstract class AuthRepository {
     required String newPassword,
   });
 
+  Future<UserSession> updateProfile({
+    required String fullName,
+    required String email,
+    required String phone,
+  });
+
   Future<String> requestPasswordReset({required String phone});
 
   Future<void> resetPassword({

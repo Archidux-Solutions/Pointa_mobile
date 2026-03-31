@@ -93,6 +93,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final record = await _remoteDataSource.sendToggle(
         latitude: location.latitude,
         longitude: location.longitude,
+        accuracyMeters: location.accuracyMeters,
+        capturedAt: location.capturedAt,
       );
       _localDataSource.addRecord(record);
       return record;

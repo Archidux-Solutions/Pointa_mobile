@@ -147,18 +147,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     key: const Key('profile_save_button'),
-                    onPressed: () {
-                      ref
-                          .read(authControllerProvider.notifier)
-                          .updateProfile(
-                            displayName: nameController.text,
-                            email: emailController.text,
-                            phoneNumber: phoneController.text,
-                          );
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(content: Text('Profil mis a jour.')),
-                      );
+                    onPressed: () async {
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(this.context);
+
+                      try {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .updateProfile(
+                              displayName: nameController.text,
+                              email: emailController.text,
+                              phoneNumber: phoneController.text,
+                            );
+                        if (!mounted) {
+                          return;
+                        }
+                        navigator.pop();
+                        messenger.showSnackBar(
+                          const SnackBar(content: Text('Profil mis a jour.')),
+                        );
+                      } on AuthException catch (error) {
+                        if (!mounted) {
+                          return;
+                        }
+                        messenger.showSnackBar(
+                          SnackBar(content: Text(error.message)),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF5A7DF5),

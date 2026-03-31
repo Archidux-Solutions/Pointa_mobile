@@ -97,6 +97,60 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<UserSession> updateProfile({
+    required String fullName,
+    required String email,
+    required String phone,
+  }) async {
+    if (_sessionStore.accessToken == null) {
+      throw const AuthException('Session expiree. Reconnectez-vous.');
+    }
+
+    try {
+      final name = _splitName(fullName);
+      final payload = await _apiClient.sendJson(
+        method: 'PATCH',
+        path: '/api/auth/me/',
+        body: <String, dynamic>{
+          'first_name': name.firstName,
+          'last_name': name.lastName,
+          'email': email.trim(),
+          'phone': phone.trim(),
+        },
+        authenticated: true,
+      );
+
+      if (payload is! Map<String, dynamic>) {
+        throw const AuthException('Profil utilisateur introuvable.');
+      }
+
+      final accessToken = _sessionStore.accessToken;
+      if (accessToken == null || accessToken.isEmpty) {
+        throw const AuthException('Session expiree. Reconnectez-vous.');
+      }
+
+      final userId = _extractUserId(accessToken);
+      final responseUserId = '${payload['id'] ?? ''}'.trim();
+      if (responseUserId.isNotEmpty && responseUserId != userId) {
+        throw const AuthException('Profil utilisateur incoherent.');
+      }
+
+      final firstName = (payload['first_name'] as String?)?.trim() ?? '';
+      final lastName = (payload['last_name'] as String?)?.trim() ?? '';
+      final displayName = '$firstName $lastName'.trim();
+
+      return UserSession(
+        userId: userId,
+        displayName: displayName.isEmpty ? fullName.trim() : displayName,
+        email: (payload['email'] as String?)?.trim() ?? email.trim(),
+        phoneNumber: (payload['phone'] as String?)?.trim() ?? phone.trim(),
+      );
+    } on ApiException catch (error) {
+      throw AuthException(error.message);
+    }
+  }
+
+  @override
   Future<String> requestPasswordReset({required String phone}) async {
     try {
       final payload = await _apiClient.sendJson(

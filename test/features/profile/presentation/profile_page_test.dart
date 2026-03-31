@@ -76,4 +76,20 @@ class _ProfileFakeAuthController extends AuthController {
       ),
     );
   }
+
+  @override
+  Future<void> updateProfile({
+    required String displayName,
+    required String email,
+    required String phoneNumber,
+  }) async {
+    state = state.copyWith(
+      session: UserSession(
+        userId: state.session!.userId,
+        displayName: displayName,
+        email: email,
+        phoneNumber: phoneNumber,
+      ),
+    );
+  }
 }
