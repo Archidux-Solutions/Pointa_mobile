@@ -3,8 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_colors.dart';
+import 'package:pointa_mobile/core/theme/app_radius.dart';
+import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
@@ -91,15 +94,16 @@ class HomePage extends ConsumerWidget {
   }
 
   void _handleBottomNavSelection(BuildContext context, int index) {
+    // Nouvelle navigation : Accueil(0), Historique(1), Pointage(2), Recap(3), Profil(4)
     switch (index) {
       case 0:
         context.go(AppRoutes.home);
         return;
       case 1:
-        context.go(AppRoutes.attendance);
+        context.go(AppRoutes.history);
         return;
       case 2:
-        context.go(AppRoutes.history);
+        context.go(AppRoutes.attendance);
         return;
       case 3:
         context.go(AppRoutes.summary);
@@ -120,7 +124,7 @@ class HomePage extends ConsumerWidget {
     final historyAsync = ref.watch(attendanceHistoryProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2F7),
+      backgroundColor: AppColors.neutral50,
       appBar: AppHomeAppBar(
         displayName: _formatDisplayName(session),
         onSignOut: () async {
@@ -128,119 +132,106 @@ class HomePage extends ConsumerWidget {
         },
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
-        children: <Widget>[
+        padding: AppSpacing.pageWithNav,
+        children: [
+          // Hero Card - Statut du jour
           statusAsync.when(
             loading: () => const AppLoadingState(
-              message: 'Chargement du statut du jour...',
+              message: 'Chargement du statut...',
             ),
-            error: (_, _) => AppErrorState(
+            error: (_, __) => AppErrorState(
               title: 'Statut indisponible',
               message: 'Impossible de charger le statut du jour.',
               onRetry: () => ref.invalidate(attendanceStatusProvider),
             ),
-            data: (status) {
-              return _StatusHeroCard(
-                title: 'Statut du jour',
-                statusLabel: status.isCheckedIn ? 'En service' : 'Hors service',
-                siteLabel: status.siteLabel,
-                actionLabel: status.isCheckedIn
-                    ? 'Pointer le depart'
-                    : "Pointer l'arrivee",
-                onTap: () => context.go(AppRoutes.attendance),
-              );
-            },
+            data: (status) => _StatusHeroCard(
+              isCheckedIn: status.isCheckedIn,
+              siteLabel: status.siteLabel,
+              onTap: () => context.go(AppRoutes.attendance),
+            ),
           ),
-          const SizedBox(height: 18),
+          
+          AppSpacing.verticalMd,
+          
+          // Métriques du jour
           summaryAsync.when(
-            loading: () =>
-                const AppLoadingState(message: 'Chargement des indicateurs...'),
-            error: (_, _) => AppErrorState(
-              title: 'Indicateurs indisponibles',
-              message: 'Impossible de charger les indicateurs du jour.',
+            loading: () => const AppLoadingState(
+              message: 'Chargement...',
+              compact: true,
+            ),
+            error: (_, __) => AppErrorState(
+              title: 'Erreur',
+              message: 'Impossible de charger les indicateurs.',
+              compact: true,
               onRetry: () => ref.invalidate(attendanceSummaryProvider),
             ),
-            data: (summary) {
-              return Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _MetricCard(
-                      title: 'Heures',
-                      value: _formatMetricMinutes(summary.workedMinutes),
-                      icon: Icons.schedule_rounded,
-                      startColor: const Color(0xFF43C1C2),
-                      endColor: const Color(0xFF2B9CAD),
-                      textColor: Colors.white,
-                    ),
+            data: (summary) => Row(
+              children: [
+                Expanded(
+                  child: _MetricCard(
+                    title: 'Heures',
+                    value: _formatMetricMinutes(summary.workedMinutes),
+                    icon: Icons.schedule_rounded,
+                    color: AppColors.success,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _MetricCard(
-                      title: 'Retards',
-                      value: summary.lateCount.toString(),
-                      startColor: const Color(0xFFF1E2BF),
-                      endColor: const Color(0xFFE9D7B3),
-                      textColor: const Color(0xFF243154),
-                    ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _MetricCard(
+                    title: 'Retards',
+                    value: summary.lateCount.toString(),
+                    color: AppColors.warning,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _MetricCard(
-                      title: 'Absences',
-                      value: summary.absenceCount.toString(),
-                      startColor: const Color(0xFFF6D987),
-                      endColor: const Color(0xFFF0CC67),
-                      textColor: const Color(0xFF243154),
-                    ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: _MetricCard(
+                    title: 'Absences',
+                    value: summary.absenceCount.toString(),
+                    color: AppColors.danger,
                   ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: const Color(0xFFE6E3EF)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x0A111B33),
-                  blurRadius: 26,
-                  offset: Offset(0, 12),
                 ),
               ],
             ),
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+          ),
+          
+          const SizedBox(height: AppSpacing.lg),
+          
+          // Historique récent
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 Text(
                   'Derniers pointages',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontSize: 22,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1D2752),
+                    color: AppColors.neutral900,
                   ),
                 ),
-                const SizedBox(height: 20),
+                AppSpacing.verticalMd,
                 historyAsync.when(
                   loading: () => const AppLoadingState(
-                    message: 'Chargement des derniers pointages...',
+                    message: 'Chargement...',
                     asCard: false,
+                    compact: true,
                   ),
-                  error: (_, _) => AppErrorState(
+                  error: (_, __) => AppErrorState(
                     title: 'Historique indisponible',
                     message: 'Impossible de charger les derniers pointages.',
                     asCard: false,
+                    compact: true,
                     onRetry: () => ref.invalidate(attendanceHistoryProvider),
                   ),
                   data: (history) {
                     if (history.isEmpty) {
                       return const AppEmptyState(
-                        title: 'Aucun pointage disponible',
-                        message: 'Vos prochaines actions apparaitront ici.',
+                        title: 'Aucun pointage',
+                        message: 'Vos pointages apparaîtront ici.',
+                        icon: Icons.schedule_outlined,
                         asCard: false,
+                        compact: true,
                       );
                     }
 
@@ -250,7 +241,7 @@ class HomePage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: groupedHistory.entries.map((entry) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 18),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
                           child: _HistoryGroup(
                             label: _formatGroupLabel(entry.key),
                             records: entry.value,
@@ -274,169 +265,156 @@ class HomePage extends ConsumerWidget {
   }
 }
 
+/// Hero card affichant le statut du jour sur la page Home
 class _StatusHeroCard extends StatelessWidget {
   const _StatusHeroCard({
-    required this.title,
-    required this.statusLabel,
+    required this.isCheckedIn,
     required this.siteLabel,
-    required this.actionLabel,
     required this.onTap,
   });
 
-  final String title;
-  final String statusLabel;
+  final bool isCheckedIn;
   final String siteLabel;
-  final String actionLabel;
   final VoidCallback onTap;
+
+  String get _statusLabel => isCheckedIn ? 'En service' : 'Hors service';
+  String get _actionLabel => isCheckedIn ? 'Pointer le départ' : "Pointer l'arrivée";
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFF4065F0), Color(0xFF5A8CFF)],
-        ),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x304F77F4),
-            blurRadius: 26,
-            offset: Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: <Widget>[
-          Positioned(
-            top: -26,
-            right: -36,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
+    return AppHeroCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Cercle de statut
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  isCheckedIn ? Icons.check_rounded : Icons.schedule_outlined,
+                  color: Colors.white,
+                  size: 32,
+                ),
               ),
-            ),
-          ),
-          Positioned(
-            top: 16,
-            right: 24,
-            child: Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-            child: Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Container(
-                      width: 88,
-                      height: 88,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.12),
-                      ),
-                      child: const Icon(
-                        Icons.check_rounded,
+              const SizedBox(width: AppSpacing.md),
+              // Infos
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Statut du jour',
+                      style: TextStyle(
                         color: Colors.white,
-                        size: 42,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 18),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          _statusLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            statusLabel,
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isCheckedIn ? AppColors.success : AppColors.neutral400,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
                             siteLabel,
-                            style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.82),
-                                  fontSize: 15,
-                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 13,
+                            ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 22),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onTap,
-                    borderRadius: BorderRadius.circular(26),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(26),
-                        boxShadow: const <BoxShadow>[
-                          BoxShadow(
-                            color: Color(0x11081A42),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 20, 20, 20),
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                actionLabel,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(
-                                      color: AppColors.primary,
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Icon(
-                              Icons.chevron_right_rounded,
-                              color: AppColors.primary,
-                              size: 30,
-                            ),
-                          ],
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          // Bouton d'action
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Ink(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        _actionLabel,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -445,91 +423,73 @@ class _StatusHeroCard extends StatelessWidget {
   }
 }
 
+/// Carte de métrique compacte pour la page Home
 class _MetricCard extends StatelessWidget {
   const _MetricCard({
     required this.title,
     required this.value,
-    required this.startColor,
-    required this.endColor,
-    required this.textColor,
+    required this.color,
     this.icon,
   });
 
   final String title;
   final String value;
-  final Color startColor;
-  final Color endColor;
-  final Color textColor;
+  final Color color;
   final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
+    // Génère une version soft de la couleur pour le fond
+    final softColor = Color.lerp(color, Colors.white, 0.85)!;
+    
     return Container(
-      height: 128,
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      height: 100,
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[startColor, endColor],
+        color: softColor,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(
+          color: color.withValues(alpha: 0.2),
         ),
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x0E111B33),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: textColor,
-              fontSize: 17,
-              fontWeight: FontWeight.w500,
-            ),
+        children: [
+          Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: color, size: 16),
+                const SizedBox(width: 4),
+              ],
+              Text(
+                title,
+                style: TextStyle(
+                  color: AppColors.neutral500,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
           const Spacer(),
-          if (icon != null)
-            Row(
-              children: <Widget>[
-                Icon(icon, color: textColor.withValues(alpha: 0.92), size: 26),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: textColor,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            )
-          else
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: textColor,
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-              ),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: AppColors.neutral900,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
             ),
+          ),
         ],
       ),
     );
   }
 }
 
+/// Groupe d'historique pour un jour
 class _HistoryGroup extends StatelessWidget {
   const _HistoryGroup({
     required this.label,
@@ -545,19 +505,20 @@ class _HistoryGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
+      children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontSize: 18,
-            color: const Color(0xFF7C8199),
-            fontWeight: FontWeight.w700,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.neutral500,
+            letterSpacing: 0.3,
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.sm),
         ...records.map((record) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: _HistoryRecordTile(
               record: record,
               timeFormatter: timeFormatter,
@@ -569,8 +530,12 @@ class _HistoryGroup extends StatelessWidget {
   }
 }
 
+/// Tuile d'un pointage dans l'historique
 class _HistoryRecordTile extends StatelessWidget {
-  const _HistoryRecordTile({required this.record, required this.timeFormatter});
+  const _HistoryRecordTile({
+    required this.record,
+    required this.timeFormatter,
+  });
 
   final AttendanceRecord record;
   final String Function(DateTime) timeFormatter;
@@ -578,78 +543,67 @@ class _HistoryRecordTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCheckIn = record.actionType == AttendanceActionType.checkIn;
-    final title = isCheckIn
-        ? 'Arrivee ${record.siteLabel}'
-        : 'Depart ${record.siteLabel}';
+    final title = isCheckIn ? 'Arrivée' : 'Départ';
+    final iconColor = isCheckIn ? AppColors.success : AppColors.danger;
+    final bgColor = isCheckIn ? AppColors.successSoft : AppColors.dangerSoft;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
-        color: const Color(0xFFFBFAFD),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE9E6EF)),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x09111B33),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
+        color: AppColors.neutral50,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.neutral200),
       ),
       child: Row(
-        children: <Widget>[
+        children: [
+          // Icône
           Container(
-            width: 46,
-            height: 46,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isCheckIn
-                  ? const Color(0xFF50BFAF).withValues(alpha: 0.18)
-                  : const Color(0xFFE85C6E).withValues(alpha: 0.14),
+              color: bgColor,
+              borderRadius: BorderRadius.circular(AppRadius.xs),
             ),
             child: Icon(
-              isCheckIn ? Icons.check_rounded : Icons.logout_rounded,
-              color: isCheckIn
-                  ? const Color(0xFF3AB4A5)
-                  : const Color(0xFFE05B73),
-              size: 26,
+              isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
+              color: iconColor,
+              size: 18,
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpacing.sm),
+          // Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 Text(
                   title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 18,
+                  style: const TextStyle(
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1C2550),
+                    color: AppColors.neutral900,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  record.isPendingSync
-                      ? '${timeFormatter(record.timestamp)} • Sync en attente'
-                      : timeFormatter(record.timestamp),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7E859D),
-                    fontSize: 16,
+                if (record.isPendingSync)
+                  Text(
+                    'Sync en attente',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.warning,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          // Heure
           Text(
             timeFormatter(record.timestamp),
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF16234B),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.neutral900,
+              letterSpacing: -0.3,
             ),
           ),
         ],

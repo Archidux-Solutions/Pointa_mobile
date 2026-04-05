@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
+import 'package:pointa_mobile/core/theme/app_colors.dart';
+import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_card.dart';
 import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
@@ -176,15 +179,16 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
   }
 
   void _handleBottomNavSelection(BuildContext context, int index) {
+    // Nouvelle navigation : Accueil(0), Historique(1), Pointage(2), Recap(3), Profil(4)
     switch (index) {
       case 0:
         context.go(AppRoutes.home);
         return;
       case 1:
-        context.go(AppRoutes.attendance);
+        context.go(AppRoutes.history);
         return;
       case 2:
-        context.go(AppRoutes.history);
+        context.go(AppRoutes.attendance);
         return;
       case 3:
         context.go(AppRoutes.summary);
@@ -200,18 +204,18 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
     final historyAsync = ref.watch(attendanceHistoryProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2F7),
+      backgroundColor: AppColors.neutral50,
       appBar: const AppSectionAppBar(title: 'Historique'),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
-        children: <Widget>[
+        padding: AppSpacing.pageWithNav,
+        children: [
           historyAsync.when(
-            loading: () =>
-                const AppLoadingState(message: 'Chargement de l historique...'),
-            error: (_, _) => AppErrorState(
+            loading: () => const AppLoadingState(
+              message: 'Chargement de l\'historique...',
+            ),
+            error: (_, __) => AppErrorState(
               title: 'Erreur de chargement',
-              message:
-                  'Impossible de recuperer l historique. Reessayez dans quelques instants.',
+              message: 'Impossible de récupérer l\'historique.',
               onRetry: () => ref.invalidate(attendanceHistoryProvider),
               retryButtonKey: const Key('history_retry_button'),
             ),
@@ -221,44 +225,33 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
               final groups = _groupHistory(history, effectiveRange);
 
               return Column(
-                children: <Widget>[
+                children: [
+                  // Sélecteur de période
                   _DateRangeCard(
                     label:
                         'Du ${_formatShortDate(effectiveRange.start)} au ${_formatShortDate(effectiveRange.end)}',
                     onTap: () => _pickDateRange(effectiveRange),
                   ),
-                  const SizedBox(height: 18),
-                  Divider(
-                    color: const Color(0xFFD9D6E3).withValues(alpha: 0.9),
-                    thickness: 1,
-                  ),
-                  const SizedBox(height: 22),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.98),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: const Color(0xFFE6E3EF)),
-                      boxShadow: const <BoxShadow>[
-                        BoxShadow(
-                          color: Color(0x0A111B33),
-                          blurRadius: 26,
-                          offset: Offset(0, 12),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                  const SizedBox(height: AppSpacing.md),
+                  const Divider(color: AppColors.neutral200),
+                  const SizedBox(height: AppSpacing.md),
+                  
+                  // Liste des pointages
+                  AppCard(
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     child: groups.isEmpty
                         ? const AppEmptyState(
-                            title: 'Aucun pointage sur cette periode',
-                            message:
-                                'Choisissez une autre plage pour afficher l historique.',
+                            title: 'Aucun pointage',
+                            message: 'Choisissez une autre période.',
+                            icon: Icons.history_outlined,
                             asCard: false,
+                            compact: true,
                           )
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: groups.map((group) {
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 18),
+                                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                                 child: _HistoryDayCard(
                                   group: group,
                                   timeFormatter: _formatTime,
@@ -274,7 +267,7 @@ class _HistoryPageState extends ConsumerState<HistoryPage> {
         ],
       ),
       bottomNavigationBar: AppBottomNav(
-        selectedIndex: 2,
+        selectedIndex: 1,
         onSelected: (index) => _handleBottomNavSelection(context, index),
       ),
     );

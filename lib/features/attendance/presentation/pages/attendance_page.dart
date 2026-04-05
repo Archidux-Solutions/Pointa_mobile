@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/core/theme/app_colors.dart';
+import 'package:pointa_mobile/core/theme/app_radius.dart';
+import 'package:pointa_mobile/core/theme/app_spacing.dart';
 import 'package:pointa_mobile/core/widgets/app_async_state.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
+import 'package:pointa_mobile/core/widgets/app_card.dart';
+import 'package:pointa_mobile/core/widgets/app_feedback_overlay.dart';
 import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/attendance/domain/exceptions/attendance_exception.dart';
@@ -22,43 +27,44 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
   var _isSubmitting = false;
 
   Future<void> _toggleAttendance() async {
-    if (_isSubmitting) {
-      return;
-    }
+    if (_isSubmitting) return;
 
     setState(() => _isSubmitting = true);
+    
     try {
       final record = await ref
           .read(attendanceRepositoryProvider)
           .toggleAttendance();
       refreshAttendanceReadModels(ref);
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
-      final action = record.actionType == AttendanceActionType.checkIn
-          ? 'arrivee enregistree'
-          : 'depart enregistre';
-      final message = record.isPendingSync
-          ? 'Pointage local enregistre (sync en attente).'
-          : 'Pointage reussi: $action';
-      ScaffoldMessenger.of(
+      // Feedback premium avec overlay animé
+      final isCheckIn = record.actionType == AttendanceActionType.checkIn;
+      final time = _formatTime(record.timestamp);
+      
+      await AppAttendanceSuccessOverlay.show(
         context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+        isCheckIn: isCheckIn,
+        time: time,
+        location: record.siteLabel,
+      );
+      
     } on AttendanceException catch (error) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(
+      if (!mounted) return;
+      
+      await AppFeedbackOverlay.error(
         context,
-      ).showSnackBar(SnackBar(content: Text(error.message)));
+        title: 'Erreur de pointage',
+        message: error.message,
+      );
     } catch (_) {
-      if (!mounted) {
-        return;
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Action impossible, reessayez.')),
+      if (!mounted) return;
+      
+      await AppFeedbackOverlay.error(
+        context,
+        title: 'Erreur',
+        message: 'Action impossible, réessayez.',
       );
     } finally {
       if (mounted) {
@@ -182,15 +188,16 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
   }
 
   void _handleBottomNavSelection(BuildContext context, int index) {
+    // Nouvelle navigation : Accueil(0), Historique(1), Pointage(2), Recap(3), Profil(4)
     switch (index) {
       case 0:
         context.go(AppRoutes.home);
         return;
       case 1:
-        context.go(AppRoutes.attendance);
+        context.go(AppRoutes.history);
         return;
       case 2:
-        context.go(AppRoutes.history);
+        context.go(AppRoutes.attendance);
         return;
       case 3:
         context.go(AppRoutes.summary);
@@ -209,54 +216,40 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
     final isSyncing = ref.watch(attendanceSyncingProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F2F7),
+      backgroundColor: AppColors.neutral50,
       appBar: const AppSectionAppBar(title: 'Pointage'),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 130),
-        children: <Widget>[
+        padding: AppSpacing.pageWithNav,
+        children: [
+          // Hero Card - Statut et action principale
           statusAsync.when(
             loading: () => const AppLoadingState(
-              message: 'Chargement du statut de pointage...',
+              message: 'Chargement du statut...',
             ),
-            error: (_, _) => AppErrorState(
+            error: (_, __) => AppErrorState(
               title: 'Statut indisponible',
               message: 'Impossible de charger le statut de pointage.',
               onRetry: () => ref.invalidate(attendanceStatusProvider),
             ),
-            data: (status) {
-              return _AttendanceHeroCard(
-                statusText: status.isCheckedIn ? 'En service' : 'Hors service',
-                siteLabel: status.siteLabel,
-                radiusMeters: status.radiusMeters,
-                actionText: status.isCheckedIn
-                    ? 'Pointer le depart'
-                    : "Pointer l'arrivee",
-                actionIcon: status.isCheckedIn
-                    ? Icons.logout_rounded
-                    : Icons.login_rounded,
-                actionIconColor: status.isCheckedIn
-                    ? const Color(0xFFE17386)
-                    : const Color(0xFF47BAA5),
-                onPressed: _toggleAttendance,
-                isLoading: _isSubmitting,
-              );
-            },
+            data: (status) => _AttendanceHeroCard(
+              isCheckedIn: status.isCheckedIn,
+              siteLabel: status.siteLabel,
+              radiusMeters: status.radiusMeters,
+              onPressed: _toggleAttendance,
+              isLoading: _isSubmitting,
+            ),
           ),
-          const SizedBox(height: 18),
+          
+          AppSpacing.verticalMd,
+          
+          // Carte de synchronisation en attente
           pendingSyncAsync.when(
             loading: () => const SizedBox.shrink(),
-            error: (_, _) => AppErrorState(
-              title: 'Synchronisation indisponible',
-              message: 'Impossible de lire les actions en attente.',
-              onRetry: () => ref.invalidate(attendancePendingSyncCountProvider),
-            ),
+            error: (_, __) => const SizedBox.shrink(),
             data: (pendingCount) {
-              if (pendingCount == 0) {
-                return const SizedBox.shrink();
-              }
-
+              if (pendingCount == 0) return const SizedBox.shrink();
               return Padding(
-                padding: const EdgeInsets.only(bottom: 18),
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: _PendingSyncCard(
                   pendingCount: pendingCount,
                   isSyncing: isSyncing,
@@ -265,49 +258,42 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
               );
             },
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.98),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: const Color(0xFFE6E3EF)),
-              boxShadow: const <BoxShadow>[
-                BoxShadow(
-                  color: Color(0x0A111B33),
-                  blurRadius: 26,
-                  offset: Offset(0, 12),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 18),
+          
+          // Historique du jour
+          AppCard(
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 Text(
                   'Historique du jour',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontSize: 22,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1D2752),
+                    color: AppColors.neutral900,
                   ),
                 ),
-                const SizedBox(height: 18),
+                AppSpacing.verticalMd,
                 historyAsync.when(
                   loading: () => const AppLoadingState(
-                    message: 'Chargement des dernieres actions...',
+                    message: 'Chargement...',
                     asCard: false,
+                    compact: true,
                   ),
-                  error: (_, _) => AppErrorState(
+                  error: (_, __) => AppErrorState(
                     title: 'Historique indisponible',
-                    message: 'Impossible de charger les dernieres actions.',
+                    message: 'Impossible de charger les dernières actions.',
                     asCard: false,
+                    compact: true,
                     onRetry: () => ref.invalidate(attendanceHistoryProvider),
                   ),
                   data: (history) {
                     if (history.isEmpty) {
                       return const AppEmptyState(
-                        title: 'Aucune action de pointage',
-                        message: 'Les prochaines actions apparaitront ici.',
+                        title: 'Aucune action',
+                        message: 'Vos pointages apparaîtront ici.',
+                        icon: Icons.schedule_outlined,
                         asCard: false,
+                        compact: true,
                       );
                     }
 
@@ -320,7 +306,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: groups.map((group) {
                         return Padding(
-                          padding: const EdgeInsets.only(bottom: 18),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
                           child: _AttendanceHistoryGroup(
                             group: group,
                             timeFormatter: _formatTime,
@@ -336,247 +322,186 @@ class _AttendancePageState extends ConsumerState<AttendancePage> {
         ],
       ),
       bottomNavigationBar: AppBottomNav(
-        selectedIndex: 1,
+        selectedIndex: 2, // Pointage est maintenant au centre (index 2)
         onSelected: (index) => _handleBottomNavSelection(context, index),
       ),
     );
   }
 }
 
-class _AttendanceHeroCard extends StatelessWidget {
+/// Hero Card de pointage avec statut et bouton d'action
+class _AttendanceHeroCard extends StatefulWidget {
   const _AttendanceHeroCard({
-    required this.statusText,
+    required this.isCheckedIn,
     required this.siteLabel,
     required this.radiusMeters,
-    required this.actionText,
-    required this.actionIcon,
-    required this.actionIconColor,
     required this.onPressed,
     required this.isLoading,
   });
 
-  final String statusText;
+  final bool isCheckedIn;
   final String siteLabel;
   final int? radiusMeters;
-  final String actionText;
-  final IconData actionIcon;
-  final Color actionIconColor;
   final Future<void> Function() onPressed;
   final bool isLoading;
 
   @override
+  State<_AttendanceHeroCard> createState() => _AttendanceHeroCardState();
+}
+
+class _AttendanceHeroCardState extends State<_AttendanceHeroCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    // Animation de pulsation subtile pour le cercle de statut
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  String get _statusText => widget.isCheckedIn ? 'En service' : 'Hors service';
+  String get _actionText => widget.isCheckedIn ? 'Pointer le départ' : "Pointer l'arrivée";
+  IconData get _actionIcon => widget.isCheckedIn ? Icons.logout_rounded : Icons.login_rounded;
+  Color get _actionIconColor => widget.isCheckedIn ? AppColors.danger : AppColors.success;
+  Color get _statusDotColor => widget.isCheckedIn ? AppColors.success : AppColors.neutral400;
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: <Color>[Color(0xFF4065F0), Color(0xFF5A8CFF)],
-        ),
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: const <BoxShadow>[
-          BoxShadow(
-            color: Color(0x304F77F4),
-            blurRadius: 26,
-            offset: Offset(0, 14),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: <Widget>[
-          Positioned(
-            top: -26,
-            right: -36,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 16,
-            right: 24,
-            child: Container(
-              width: 92,
-              height: 92,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 22),
-            child: Column(
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Container(
-                      width: 86,
-                      height: 86,
+    return AppHeroCard(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              // Cercle de statut animé
+              AnimatedBuilder(
+                animation: _pulseAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: widget.isCheckedIn ? _pulseAnimation.value : 1.0,
+                    child: Container(
+                      width: 72,
+                      height: 72,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: 0.12),
+                        color: Colors.white.withValues(alpha: 0.15),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          width: 2,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
+                      child: Icon(
+                        widget.isCheckedIn ? Icons.check_rounded : Icons.schedule_outlined,
                         color: Colors.white,
-                        size: 42,
+                        size: 32,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
+                  );
+                },
+              ),
+              
+              AppSpacing.horizontalMd,
+              
+              // Infos statut
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          _statusText,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Dot de statut
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _statusDotColor,
+                            boxShadow: widget.isCheckedIn
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.success.withValues(alpha: 0.5),
+                                      blurRadius: 8,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Zone et rayon
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            widget.siteLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (widget.radiusMeters != null) ...[
+                          const SizedBox(width: 12),
                           Text(
-                            'Statut actuel',
-                            style: Theme.of(context).textTheme.titleLarge
-                                ?.copyWith(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: <Widget>[
-                              Flexible(
-                                child: Text(
-                                  statusText,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                width: 14,
-                                height: 14,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color(0xFF7BE0A5),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Row(
-                            children: <Widget>[
-                              Flexible(
-                                child: Text(
-                                  'Zone : $siteLabel',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.84,
-                                        ),
-                                        fontSize: 17,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              if (radiusMeters != null) ...<Widget>[
-                                const Icon(
-                                  Icons.location_on_rounded,
-                                  color: Colors.white70,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'Rayon $radiusMeters m',
-                                  style: Theme.of(context).textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.84,
-                                        ),
-                                        fontSize: 17,
-                                      ),
-                                ),
-                              ],
-                            ],
+                            '${widget.radiusMeters}m',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 13,
+                            ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 22),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: isLoading ? null : () => onPressed(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: const <BoxShadow>[
-                          BoxShadow(
-                            color: Color(0x11081A42),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 22,
-                          vertical: 18,
-                        ),
-                        child: Center(
-                          child: isLoading
-                              ? const SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.4,
-                                    color: AppColors.primary,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: <Widget>[
-                                    Icon(
-                                      actionIcon,
-                                      color: actionIconColor,
-                                      size: 28,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Flexible(
-                                      child: Text(
-                                        actionText,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge
-                                            ?.copyWith(
-                                              color: AppColors.primaryDark,
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: AppSpacing.lg),
+          
+          // Bouton d'action principal
+          _AttendanceActionButton(
+            label: _actionText,
+            icon: _actionIcon,
+            iconColor: _actionIconColor,
+            isLoading: widget.isLoading,
+            onPressed: widget.onPressed,
           ),
         ],
       ),
@@ -584,6 +509,131 @@ class _AttendanceHeroCard extends StatelessWidget {
   }
 }
 
+/// Bouton d'action de pointage (dans le hero card)
+class _AttendanceActionButton extends StatefulWidget {
+  const _AttendanceActionButton({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final bool isLoading;
+  final Future<void> Function() onPressed;
+
+  @override
+  State<_AttendanceActionButton> createState() => _AttendanceActionButtonState();
+}
+
+class _AttendanceActionButtonState extends State<_AttendanceActionButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (widget.isLoading) return;
+    _controller.forward();
+    HapticFeedback.lightImpact();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (widget.isLoading) return;
+    _controller.reverse();
+    widget.onPressed();
+  }
+
+  void _handleTapCancel() {
+    _controller.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _scaleAnimation,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
+        );
+      },
+      child: GestureDetector(
+        onTapDown: _handleTapDown,
+        onTapUp: _handleTapUp,
+        onTapCancel: _handleTapCancel,
+        child: Container(
+          width: double.infinity,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.1),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Center(
+            child: widget.isLoading
+                ? SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: AppColors.primary,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        color: widget.iconColor,
+                        size: 26,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.neutral900,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Carte indiquant les actions en attente de synchronisation
 class _PendingSyncCard extends StatelessWidget {
   const _PendingSyncCard({
     required this.pendingCount,
@@ -597,50 +647,74 @@ class _PendingSyncCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFE6E3EF)),
-      ),
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
-        children: <Widget>[
+        children: [
+          // Icône sync
           Container(
-            width: 46,
-            height: 46,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF1FF),
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.warningSoft,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Icon(Icons.sync_rounded, color: AppColors.primary),
+            child: const Icon(
+              Icons.sync_rounded,
+              color: AppColors.warning,
+              size: 22,
+            ),
           ),
-          const SizedBox(width: 14),
+          AppSpacing.horizontalSm,
+          // Texte
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 Text(
-                  '$pendingCount action(s) en attente de synchronisation.',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF1B2650),
-                    fontWeight: FontWeight.w700,
+                  '$pendingCount action(s) en attente',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.neutral900,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 2),
                 Text(
-                  'Lancez la reprise pour envoyer les actions au backend.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7C8199),
+                  'Synchronisez pour envoyer au serveur',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.neutral500,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          // Bouton sync
           TextButton(
             onPressed: isSyncing ? null : () => onPressed(),
-            child: Text(isSyncing ? 'Sync...' : 'Synchroniser'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.warning,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isSyncing)
+                  const SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.warning,
+                    ),
+                  )
+                else
+                  const Icon(Icons.sync_rounded, size: 18),
+                const SizedBox(width: 6),
+                Text(isSyncing ? 'Sync...' : 'Sync'),
+              ],
+            ),
           ),
         ],
       ),
@@ -648,6 +722,7 @@ class _PendingSyncCard extends StatelessWidget {
   }
 }
 
+/// Groupe d'historique pour un jour
 class _AttendanceHistoryGroup extends StatelessWidget {
   const _AttendanceHistoryGroup({
     required this.group,
@@ -661,56 +736,52 @@ class _AttendanceHistoryGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
+      children: [
+        // Label du jour
         Text(
           group.label,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontSize: 18,
-            color: const Color(0xFF7C8199),
-            fontWeight: FontWeight.w700,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.neutral500,
+            letterSpacing: 0.3,
           ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.sm),
+        
+        // Card avec arrivée et départ
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFFBFAFD),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFFE9E6EF)),
-            boxShadow: const <BoxShadow>[
-              BoxShadow(
-                color: Color(0x09111B33),
-                blurRadius: 16,
-                offset: Offset(0, 8),
-              ),
-            ],
+            color: AppColors.neutral50,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: AppColors.neutral200),
           ),
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
           child: Column(
-            children: <Widget>[
+            children: [
+              // Arrivée
               _AttendanceHistoryRow(
-                title: 'Arrivee ${group.siteLabel}',
-                subtitle: group.arrival == null
-                    ? '--:--'
-                    : timeFormatter(group.arrival!.timestamp),
-                trailing: group.arrival == null
-                    ? '--:--'
-                    : timeFormatter(group.arrival!.timestamp),
-                icon: Icons.check_rounded,
-                iconBackground: const Color(0xFF50BFAF).withValues(alpha: 0.18),
-                iconColor: const Color(0xFF3AB4A5),
+                label: 'Arrivée',
+                time: group.arrival != null
+                    ? timeFormatter(group.arrival!.timestamp)
+                    : '--:--',
+                isCheckIn: true,
+                isPending: false,
               ),
-              const Divider(height: 20, color: Color(0xFFE7E4EE)),
+              
+              const Divider(height: 1, color: AppColors.neutral200),
+              
+              // Départ
               _AttendanceHistoryRow(
-                title: 'Depart ${group.siteLabel}',
-                subtitle: group.departure == null
-                    ? (group.showPendingDeparture ? 'En attente' : '--:--')
-                    : timeFormatter(group.departure!.timestamp),
-                trailing: group.departure == null
-                    ? '--:--'
-                    : timeFormatter(group.departure!.timestamp),
-                icon: Icons.logout_rounded,
-                iconBackground: const Color(0xFFE85C6E).withValues(alpha: 0.14),
-                iconColor: const Color(0xFFE05B73),
+                label: 'Départ',
+                time: group.departure != null
+                    ? timeFormatter(group.departure!.timestamp)
+                    : '--:--',
+                isCheckIn: false,
+                isPending: group.showPendingDeparture,
               ),
             ],
           ),
@@ -720,71 +791,79 @@ class _AttendanceHistoryGroup extends StatelessWidget {
   }
 }
 
+/// Ligne d'historique (arrivée ou départ)
 class _AttendanceHistoryRow extends StatelessWidget {
   const _AttendanceHistoryRow({
-    required this.title,
-    required this.subtitle,
-    required this.trailing,
-    required this.icon,
-    required this.iconBackground,
-    required this.iconColor,
+    required this.label,
+    required this.time,
+    required this.isCheckIn,
+    required this.isPending,
   });
 
-  final String title;
-  final String subtitle;
-  final String trailing;
-  final IconData icon;
-  final Color iconBackground;
-  final Color iconColor;
+  final String label;
+  final String time;
+  final bool isCheckIn;
+  final bool isPending;
 
   @override
   Widget build(BuildContext context) {
+    final iconColor = isCheckIn ? AppColors.success : AppColors.danger;
+    final bgColor = isCheckIn ? AppColors.successSoft : AppColors.dangerSoft;
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
-        children: <Widget>[
+        children: [
+          // Icône
           Container(
-            width: 44,
-            height: 44,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: iconBackground,
+              color: bgColor,
+              borderRadius: BorderRadius.circular(AppRadius.xs),
             ),
-            child: Icon(icon, color: iconColor, size: 26),
+            child: Icon(
+              isCheckIn ? Icons.login_rounded : Icons.logout_rounded,
+              color: iconColor,
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 14),
+          AppSpacing.horizontalSm,
+          
+          // Label
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 18,
+                  label,
+                  style: const TextStyle(
+                    fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1C2550),
+                    color: AppColors.neutral900,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF7E859D),
-                    fontSize: 16,
+                if (isPending)
+                  const Text(
+                    'En cours...',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.neutral400,
+                      fontStyle: FontStyle.italic,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          
+          // Heure
           Text(
-            trailing,
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontSize: 19,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF16234B),
+            time,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: time == '--:--' ? AppColors.neutral300 : AppColors.neutral900,
+              letterSpacing: -0.5,
             ),
           ),
         ],

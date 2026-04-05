@@ -300,15 +300,16 @@ class _SummaryPageState extends ConsumerState<SummaryPage> {
   }
 
   void _handleBottomNavSelection(BuildContext context, int index) {
+    // Nouvelle navigation : Accueil(0), Historique(1), Pointage(2), Recap(3), Profil(4)
     switch (index) {
       case 0:
         context.go(AppRoutes.home);
         return;
       case 1:
-        context.go(AppRoutes.attendance);
+        context.go(AppRoutes.history);
         return;
       case 2:
-        context.go(AppRoutes.history);
+        context.go(AppRoutes.attendance);
         return;
       case 3:
         context.go(AppRoutes.summary);
