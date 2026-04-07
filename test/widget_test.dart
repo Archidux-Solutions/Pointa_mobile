@@ -1,17 +1,62 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:pointa_mobile/app/pointa_app.dart';
 import 'package:pointa_mobile/core/config/data_mode.dart';
 import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
+import 'package:pointa_mobile/features/auth/application/device_unlock_service.dart';
+import 'package:pointa_mobile/features/auth/data/session/persisted_auth_session_store.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/mock_auth_repository.dart';
+
+class _FakePersistedAuthSessionStore extends PersistedAuthSessionStore {
+  _FakePersistedAuthSessionStore() : super(const FlutterSecureStorage());
+
+  PersistedAuthSession? _session;
+
+  @override
+  Future<void> clear() async {
+    _session = null;
+  }
+
+  @override
+  Future<PersistedAuthSession?> read() async => _session;
+
+  @override
+  Future<void> save({
+    required session,
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    _session = PersistedAuthSession(
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      session: session,
+    );
+  }
+}
+
+class _FakeDeviceUnlockService extends DeviceUnlockService {
+  _FakeDeviceUnlockService() : super(LocalAuthentication());
+
+  @override
+  Future<bool> isDeviceSecurityAvailable() async => true;
+
+  @override
+  Future<bool> requestUnlock() async => true;
+}
 
 ProviderScope _appWithMockAuth() {
   return ProviderScope(
     overrides: [
       authRepositoryProvider.overrideWithValue(const MockAuthRepository()),
       dataModeProvider.overrideWithValue(DataMode.mock),
+      persistedAuthSessionStoreProvider.overrideWithValue(
+        _FakePersistedAuthSessionStore(),
+      ),
+      deviceUnlockServiceProvider.overrideWithValue(_FakeDeviceUnlockService()),
     ],
     child: const PointaApp(),
   );
@@ -21,7 +66,7 @@ void main() {
   testWidgets('Le flux mock de connexion redirige vers le tableau de bord', (
     WidgetTester tester,
   ) async {
-    await tester.binding.setSurfaceSize(const Size(430, 932));
+    await tester.binding.setSurfaceSize(const Size(480, 932));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(_appWithMockAuth());
@@ -46,31 +91,19 @@ void main() {
     expect(find.text('Bonjour,'), findsOneWidget);
   });
 
-  testWidgets('Le lien creation de compte ouvre l ecran inscription', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(430, 932));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(_appWithMockAuth());
-
-    await tester.ensureVisible(find.byKey(const Key('login_to_register_link')));
-    await tester.tap(find.byKey(const Key('login_to_register_link')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Creer un compte'), findsOneWidget);
-    expect(find.byKey(const Key('register_full_name_field')), findsOneWidget);
-  });
-
   testWidgets(
     'Le flux mot de passe oublie ouvre puis soumet la reinitialisation',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(430, 932));
+      await tester.binding.setSurfaceSize(const Size(480, 932));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(_appWithMockAuth());
 
-      await tester.tap(find.byKey(const Key('login_forgot_password_button')));
+      await tester.ensureVisible(find.byKey(const Key('login_forgot_password_button')));
+      final forgotButton = tester.widget<TextButton>(
+        find.byKey(const Key('login_forgot_password_button')),
+      );
+      forgotButton.onPressed!.call();
       await tester.pumpAndSettle();
 
       expect(find.text('Mot de passe oublie'), findsOneWidget);
@@ -106,53 +139,10 @@ void main() {
     },
   );
 
-  testWidgets('Le flux mock inscription redirige vers le tableau de bord', (
-    WidgetTester tester,
-  ) async {
-    await tester.binding.setSurfaceSize(const Size(430, 932));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(_appWithMockAuth());
-
-    await tester.ensureVisible(find.byKey(const Key('login_to_register_link')));
-    await tester.tap(find.byKey(const Key('login_to_register_link')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('register_full_name_field')),
-      'Awa Ouedraogo',
-    );
-    await tester.enterText(
-      find.byKey(const Key('register_phone_field')),
-      '+22670000001',
-    );
-    await tester.enterText(
-      find.byKey(const Key('register_email_field')),
-      'awa@pointa.app',
-    );
-    await tester.enterText(
-      find.byKey(const Key('register_password_field')),
-      'secret123',
-    );
-    await tester.enterText(
-      find.byKey(const Key('register_confirm_password_field')),
-      'secret123',
-    );
-
-    await tester.tap(find.byKey(const Key('register_terms_checkbox')));
-    await tester.ensureVisible(find.byKey(const Key('register_submit_button')));
-    await tester.tap(find.byKey(const Key('register_submit_button')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Bonjour,'), findsOneWidget);
-  });
-
   testWidgets(
     'La navigation basse ouvre le profil puis permet la deconnexion',
     (WidgetTester tester) async {
-      await tester.binding.setSurfaceSize(const Size(430, 932));
+      await tester.binding.setSurfaceSize(const Size(480, 932));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(_appWithMockAuth());

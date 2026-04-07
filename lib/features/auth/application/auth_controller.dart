@@ -1,15 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pointa_mobile/core/network/pointa_api_client_provider.dart';
+import 'package:pointa_mobile/features/auth/application/device_unlock_service.dart';
 import 'package:pointa_mobile/features/auth/application/auth_state.dart';
+import 'package:pointa_mobile/features/auth/data/session/persisted_auth_session_store.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
+import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
   AuthController.new,
 );
 
 class AuthController extends Notifier<AuthState> {
+  bool _didStartRestore = false;
+
   @override
-  AuthState build() => AuthState.initial();
+  AuthState build() {
+    if (!_didStartRestore) {
+      _didStartRestore = true;
+      Future<void>.microtask(_restorePersistedSession);
+    }
+    return AuthState.initial();
+  }
 
   Future<void> signIn({required String phone, required String password}) async {
     final repository = ref.read(authRepositoryProvider);
@@ -17,21 +29,30 @@ class AuthController extends Notifier<AuthState> {
 
     try {
       final session = await repository.signIn(phone: phone, password: password);
+      await _persistCurrentSession(session);
       state = state.copyWith(
         status: AuthStatus.authenticated,
         session: session,
+        isRestoring: false,
+        isLocked: false,
         isLoading: false,
       );
     } on AuthException catch (error) {
+      await _clearPersistedSession();
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
+        isRestoring: false,
+        isLocked: false,
         isLoading: false,
         resetSession: true,
         errorMessage: error.message,
       );
     } catch (_) {
+      await _clearPersistedSession();
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
+        isRestoring: false,
+        isLocked: false,
         isLoading: false,
         resetSession: true,
         errorMessage: 'Connexion backend impossible. Reessayez.',
@@ -55,21 +76,30 @@ class AuthController extends Notifier<AuthState> {
         email: email,
         password: password,
       );
+      await _persistCurrentSession(session);
       state = state.copyWith(
         status: AuthStatus.authenticated,
         session: session,
+        isRestoring: false,
+        isLocked: false,
         isLoading: false,
       );
     } on AuthException catch (error) {
+      await _clearPersistedSession();
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
+        isRestoring: false,
+        isLocked: false,
         isLoading: false,
         resetSession: true,
         errorMessage: error.message,
       );
     } catch (_) {
+      await _clearPersistedSession();
       state = state.copyWith(
         status: AuthStatus.unauthenticated,
+        isRestoring: false,
+        isLocked: false,
         isLoading: false,
         resetSession: true,
         errorMessage: 'Inscription backend impossible. Reessayez.',
@@ -128,7 +158,8 @@ class AuthController extends Notifier<AuthState> {
     try {
       await repository.signOut();
     } finally {
-      state = AuthState.initial();
+      await _clearPersistedSession();
+      state = AuthState.initial().copyWith(isRestoring: false, isLocked: false);
     }
   }
 
@@ -150,11 +181,130 @@ class AuthController extends Notifier<AuthState> {
         email: email,
         phone: phoneNumber,
       );
+      await _persistCurrentSession(updatedSession);
       state = state.copyWith(session: updatedSession, resetError: true);
     } on AuthException {
       rethrow;
     } catch (_) {
       throw const AuthException('Mise a jour du profil impossible. Reessayez.');
+    }
+  }
+
+  void lockApp() {
+    if (state.status != AuthStatus.authenticated ||
+        state.session == null ||
+        state.isLocked) {
+      return;
+    }
+
+    state = state.copyWith(isLocked: true, resetError: true);
+  }
+
+  Future<void> unlockWithDeviceSecurity() async {
+    if (state.status != AuthStatus.authenticated || state.session == null) {
+      return;
+    }
+
+    final deviceUnlockService = ref.read(deviceUnlockServiceProvider);
+    final canUseDeviceSecurity =
+        await deviceUnlockService.isDeviceSecurityAvailable();
+
+    if (!canUseDeviceSecurity) {
+      await requireFreshLogin(
+        message:
+            'Aucun verrouillage appareil actif. Reconnectez-vous pour acceder a Pointa.',
+      );
+      return;
+    }
+
+    state = state.copyWith(isLoading: true, resetError: true);
+    final unlocked = await deviceUnlockService.requestUnlock();
+
+    if (unlocked) {
+      state = state.copyWith(isLocked: false, isLoading: false, resetError: true);
+      return;
+    }
+
+    state = state.copyWith(
+      isLoading: false,
+      errorMessage: 'Deverrouillage annule ou refuse.',
+    );
+  }
+
+  Future<void> requireFreshLogin({String? message}) async {
+    await _clearPersistedSession();
+    state = AuthState.initial().copyWith(
+      isRestoring: false,
+      isLocked: false,
+      errorMessage: message,
+    );
+  }
+
+  Future<void> _restorePersistedSession() async {
+    try {
+      final persistedStore = ref.read(persistedAuthSessionStoreProvider);
+      final persistedSession = await persistedStore.read();
+
+      if (persistedSession == null) {
+        state = state.copyWith(isRestoring: false, isLocked: false);
+        return;
+      }
+
+      final apiSessionStore = ref.read(apiSessionStoreProvider);
+      apiSessionStore.update(
+        accessToken: persistedSession.accessToken,
+        refreshToken: persistedSession.refreshToken,
+      );
+
+      state = state.copyWith(
+        status: AuthStatus.authenticated,
+        session: persistedSession.session,
+        isRestoring: false,
+        isLocked: true,
+        isLoading: false,
+        resetError: true,
+      );
+    } catch (_) {
+      await _clearPersistedSession();
+      state = state.copyWith(
+        status: AuthStatus.unauthenticated,
+        isRestoring: false,
+        isLocked: false,
+        isLoading: false,
+        resetSession: true,
+      );
+    }
+  }
+
+  Future<void> _persistCurrentSession(UserSession session) async {
+    final apiSessionStore = ref.read(apiSessionStoreProvider);
+    final accessToken = apiSessionStore.accessToken;
+    final refreshToken = apiSessionStore.refreshToken;
+
+    if (accessToken == null ||
+        accessToken.isEmpty ||
+        refreshToken == null ||
+        refreshToken.isEmpty) {
+      return;
+    }
+
+    try {
+      await ref.read(persistedAuthSessionStoreProvider).save(
+        session: session,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
+      );
+    } catch (_) {
+      // Keep authentication usable even if secure local persistence is unavailable.
+    }
+  }
+
+  Future<void> _clearPersistedSession() async {
+    ref.read(apiSessionStoreProvider).clear();
+    try {
+      await ref.read(persistedAuthSessionStoreProvider).clear();
+    } catch (_) {
+      // Ignore local storage cleanup failures to preserve sign-out resilience.
     }
   }
 }

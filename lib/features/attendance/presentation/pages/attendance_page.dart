@@ -423,13 +423,17 @@ class _AttendanceHeroCardState extends State<_AttendanceHeroCard>
                   children: [
                     Row(
                       children: [
-                        Text(
-                          _statusText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.3,
+                        Flexible(
+                          child: Text(
+                            _statusText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),

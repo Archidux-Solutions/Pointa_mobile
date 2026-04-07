@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:pointa_mobile/app/router/app_router.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 
@@ -140,8 +138,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               final sectionGap = compact ? 24.0 : 30.0;
               final fieldGap = compact ? 12.0 : 14.0;
               final buttonGap = compact ? 18.0 : 22.0;
-              final socialGap = compact ? 18.0 : 24.0;
-              final footerGap = compact ? 18.0 : 24.0;
 
               return Stack(
                 children: <Widget>[
@@ -335,69 +331,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 ),
                               ],
                             ),
-                          ),
-                          SizedBox(height: socialGap),
-                          const _DividerLabel(label: 'ou continuer avec'),
-                          SizedBox(height: compact ? 18 : 22),
-                          Row(
-                            children: <Widget>[
-                              const Expanded(
-                                child: _SocialButton(
-                                  label: 'Google',
-                                  icon: _GoogleBadge(),
-                                  verticalPadding: 14,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-                              const Expanded(
-                                child: _SocialButton(
-                                  label: 'Facebook',
-                                  icon: _FacebookBadge(),
-                                  isPrimary: true,
-                                  verticalPadding: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: footerGap),
-                          Padding(
-                            padding: EdgeInsets.only(
-                              top: compact ? 18 : 22,
-                              bottom: compact ? 16 : 18,
-                            ),
-                            child: Divider(
-                              color: const Color(
-                                0xFFD9D0F6,
-                              ).withValues(alpha: 0.9),
-                            ),
-                          ),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 6,
-                            runSpacing: 4,
-                            children: <Widget>[
-                              const Text(
-                                'Vous n avez pas de compte ?',
-                                style: TextStyle(
-                                  color: Color(0xFF8F89B8),
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              GestureDetector(
-                                key: const Key('login_to_register_link'),
-                                onTap: () => context.go(AppRoutes.register),
-                                child: const Text(
-                                  'Creer un compte',
-                                  style: TextStyle(
-                                    color: Color(0xFF5E67E5),
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                           const SizedBox(height: 6),
                         ],
@@ -855,7 +788,6 @@ class _PrimaryLoginButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      key: buttonKey,
       height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -876,6 +808,7 @@ class _PrimaryLoginButton extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
+            key: buttonKey,
             borderRadius: BorderRadius.circular(28),
             onTap: isLoading
                 ? null
@@ -904,150 +837,6 @@ class _PrimaryLoginButton extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _DividerLabel extends StatelessWidget {
-  const _DividerLabel({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Container(
-            height: 1,
-            color: const Color(0xFFD8D0F6).withValues(alpha: 0.8),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF9D96C4),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 1,
-            color: const Color(0xFFD8D0F6).withValues(alpha: 0.8),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  const _SocialButton({
-    required this.label,
-    required this.icon,
-    required this.verticalPadding,
-    this.isPrimary = false,
-  });
-
-  final String label;
-  final Widget icon;
-  final double verticalPadding;
-  final bool isPrimary;
-
-  @override
-  Widget build(BuildContext context) {
-    final background = isPrimary
-        ? const LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: <Color>[Color(0xFF7583FF), Color(0xFF6072F4)],
-          )
-        : const LinearGradient(
-            colors: <Color>[Color(0xFFFFFFFF), Color(0xFFFFFFFF)],
-          );
-    final borderColor = isPrimary
-        ? Colors.transparent
-        : const Color(0xFFE2DBFF);
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: background,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: borderColor),
-        boxShadow: <BoxShadow>[
-          if (isPrimary)
-            const BoxShadow(
-              color: Color(0x2F6473F6),
-              blurRadius: 18,
-              offset: Offset(0, 10),
-            ),
-        ],
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: () {},
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: verticalPadding,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              icon,
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: isPrimary ? Colors.white : const Color(0xFF8580B3),
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _GoogleBadge extends StatelessWidget {
-  const _GoogleBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'G',
-      style: TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFFEA775B),
-      ),
-    );
-  }
-}
-
-class _FacebookBadge extends StatelessWidget {
-  const _FacebookBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text(
-      'f',
-      style: TextStyle(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
       ),
     );
   }

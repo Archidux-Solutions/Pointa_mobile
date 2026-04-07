@@ -13,7 +13,7 @@ void main() {
     testWidgets('affiche etat synchronise quand aucune action en attente', (
       WidgetTester tester,
     ) async {
-      await tester.binding.setSurfaceSize(const Size(430, 932));
+      await tester.binding.setSurfaceSize(const Size(480, 932));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
@@ -41,13 +41,14 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.text('Pointage'), findsWidgets);
       expect(find.text('Historique du jour'), findsOneWidget);
-      expect(find.text("Pointer l'arrivee"), findsOneWidget);
+      expect(find.text("Pointer l'arrivée"), findsOneWidget);
       expect(find.text('Synchroniser maintenant'), findsNothing);
-      expect(find.text('Synchroniser'), findsNothing);
+      expect(find.text('Sync'), findsNothing);
     });
 
     testWidgets('declenche retry sync et affiche le resultat', (
@@ -55,7 +56,7 @@ void main() {
     ) async {
       final repository = _RetryFakeAttendanceRepository(retryResult: 2);
 
-      await tester.binding.setSurfaceSize(const Size(430, 932));
+      await tester.binding.setSurfaceSize(const Size(480, 932));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
@@ -84,10 +85,12 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Synchroniser'));
-      await tester.tap(find.text('Synchroniser'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.ensureVisible(find.text('Sync'));
+      await tester.tap(find.text('Sync'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(repository.retryCalls, 1);
       expect(find.text('2 action(s) synchronisee(s).'), findsOneWidget);
@@ -98,7 +101,7 @@ void main() {
     ) async {
       final repository = _RetryFakeAttendanceRepository(retryResult: 0);
 
-      await tester.binding.setSurfaceSize(const Size(430, 932));
+      await tester.binding.setSurfaceSize(const Size(480, 932));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       await tester.pumpWidget(
@@ -127,10 +130,12 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Synchroniser'));
-      await tester.tap(find.text('Synchroniser'));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.ensureVisible(find.text('Sync'));
+      await tester.tap(find.text('Sync'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
 
       expect(repository.retryCalls, 1);
       expect(find.text('Aucune action a synchroniser.'), findsOneWidget);

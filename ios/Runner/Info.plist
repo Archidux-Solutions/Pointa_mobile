@@ -52,5 +52,7 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Pointa utilise votre position pour verifier que le pointage est effectue dans la zone autorisee.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Pointa utilise Face ID pour deverrouiller votre session en toute securite.</string>
 </dict>
 </plist>
