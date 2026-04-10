@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pointa_mobile/core/config/data_mode.dart';
 import 'package:pointa_mobile/core/network/api_session_store.dart';
 import 'package:pointa_mobile/core/network/pointa_api_client.dart';
+import 'package:pointa_mobile/features/auth/data/session/mobile_installation_service.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_mock_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_remote_data_source.dart';
@@ -120,6 +122,7 @@ AttendanceRemoteDataSource _unusedRemoteDataSource() {
       baseUrl: 'http://127.0.0.1:8000',
       sessionStore: ApiSessionStore(),
     ),
+    mobileInstallationService: _FakeMobileInstallationService(),
   );
 }
 
@@ -144,6 +147,7 @@ class _ConfigurableRemoteDataSource extends AttendanceRemoteDataSource {
           baseUrl: 'http://127.0.0.1:8000',
           sessionStore: ApiSessionStore(),
         ),
+        mobileInstallationService: _FakeMobileInstallationService(),
       );
 
   int historyCalls = 0;
@@ -202,6 +206,18 @@ class _ConfigurableRemoteDataSource extends AttendanceRemoteDataSource {
       actionType: AttendanceActionType.checkIn,
       timestamp: DateTime(2026, 3, 3, 8, 5),
       siteLabel: 'Site distant',
+    );
+  }
+}
+
+class _FakeMobileInstallationService extends MobileInstallationService {
+  _FakeMobileInstallationService() : super(const FlutterSecureStorage());
+
+  @override
+  Future<MobileInstallationIdentity> getIdentity() async {
+    return const MobileInstallationIdentity(
+      installationId: 'device-primary',
+      platform: 'android',
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:pointa_mobile/core/network/api_exception.dart';
 import 'package:pointa_mobile/core/network/api_session_store.dart';
 import 'package:pointa_mobile/core/network/pointa_api_client.dart';
+import 'package:pointa_mobile/features/auth/data/session/mobile_installation_service.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 import 'package:pointa_mobile/features/auth/domain/repositories/auth_repository.dart';
@@ -11,11 +12,14 @@ class RemoteAuthRepository implements AuthRepository {
   RemoteAuthRepository({
     required PointaApiClient apiClient,
     required ApiSessionStore sessionStore,
+    required MobileInstallationService mobileInstallationService,
   }) : _apiClient = apiClient,
-       _sessionStore = sessionStore;
+       _sessionStore = sessionStore,
+       _mobileInstallationService = mobileInstallationService;
 
   final PointaApiClient _apiClient;
   final ApiSessionStore _sessionStore;
+  final MobileInstallationService _mobileInstallationService;
 
   @override
   Future<UserSession> signIn({
@@ -23,10 +27,16 @@ class RemoteAuthRepository implements AuthRepository {
     required String password,
   }) async {
     try {
+      final deviceIdentity = await _mobileInstallationService.getIdentity();
       final payload = await _apiClient.sendJson(
         method: 'POST',
         path: '/api/auth/login/',
-        body: <String, dynamic>{'phone': phone.trim(), 'password': password},
+        body: <String, dynamic>{
+          'phone': phone.trim(),
+          'password': password,
+          'device_installation_id': deviceIdentity.installationId,
+          'device_platform': deviceIdentity.platform,
+        },
       );
 
       final accessToken = _readRequiredString(payload, 'access');

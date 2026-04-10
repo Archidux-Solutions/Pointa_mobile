@@ -1,22 +1,29 @@
 import 'package:pointa_mobile/core/network/api_exception.dart';
 import 'package:pointa_mobile/core/network/pointa_api_client.dart';
+import 'package:pointa_mobile/features/auth/data/session/mobile_installation_service.dart';
 import 'package:pointa_mobile/features/attendance/domain/exceptions/attendance_exception.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_record.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_status.dart';
 import 'package:pointa_mobile/features/attendance/domain/models/attendance_summary.dart';
 
 class AttendanceRemoteDataSource {
-  const AttendanceRemoteDataSource({required PointaApiClient apiClient})
-    : _apiClient = apiClient;
+  const AttendanceRemoteDataSource({
+    required PointaApiClient apiClient,
+    required MobileInstallationService mobileInstallationService,
+  }) : _apiClient = apiClient,
+       _mobileInstallationService = mobileInstallationService;
 
   final PointaApiClient _apiClient;
+  final MobileInstallationService _mobileInstallationService;
 
   Future<AttendanceStatus> fetchStatus() async {
     try {
+      final deviceIdentity = await _mobileInstallationService.getIdentity();
       final payload = await _apiClient.sendJson(
         method: 'GET',
         path: '/api/mobile/today/',
         authenticated: true,
+        extraHeaders: deviceIdentity.toHeaders(),
       );
 
       if (payload is! Map<String, dynamic>) {
@@ -49,10 +56,12 @@ class AttendanceRemoteDataSource {
 
   Future<List<AttendanceRecord>> fetchHistory() async {
     try {
+      final deviceIdentity = await _mobileInstallationService.getIdentity();
       final payload = await _apiClient.sendJson(
         method: 'GET',
         path: '/api/mobile/history/',
         authenticated: true,
+        extraHeaders: deviceIdentity.toHeaders(),
       );
 
       if (payload is! List) {
@@ -107,10 +116,12 @@ class AttendanceRemoteDataSource {
 
   Future<AttendanceSummary> fetchSummary() async {
     try {
+      final deviceIdentity = await _mobileInstallationService.getIdentity();
       final payload = await _apiClient.sendJson(
         method: 'GET',
         path: '/api/mobile/summary/',
         authenticated: true,
+        extraHeaders: deviceIdentity.toHeaders(),
       );
 
       if (payload is! Map<String, dynamic>) {
@@ -134,6 +145,7 @@ class AttendanceRemoteDataSource {
     required DateTime capturedAt,
   }) async {
     try {
+      final deviceIdentity = await _mobileInstallationService.getIdentity();
       final payload = await _apiClient.sendJson(
         method: 'POST',
         path: '/api/mobile/punch/',
@@ -144,6 +156,7 @@ class AttendanceRemoteDataSource {
           'captured_at': capturedAt.toUtc().toIso8601String(),
         },
         authenticated: true,
+        extraHeaders: deviceIdentity.toHeaders(),
       );
 
       if (payload is! Map<String, dynamic>) {

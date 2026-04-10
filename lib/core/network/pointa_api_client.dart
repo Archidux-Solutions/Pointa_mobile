@@ -24,6 +24,7 @@ class PointaApiClient {
     bool authenticated = false,
     String? accessTokenOverride,
     bool allowRefresh = true,
+    Map<String, String>? extraHeaders,
   }) async {
     try {
       final authToken = authenticated
@@ -38,6 +39,7 @@ class PointaApiClient {
         path: path,
         body: body,
         accessToken: authToken,
+        extraHeaders: extraHeaders,
       );
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -56,6 +58,7 @@ class PointaApiClient {
             body: body,
             authenticated: true,
             allowRefresh: false,
+            extraHeaders: extraHeaders,
           );
         }
       }
@@ -128,11 +131,13 @@ class PointaApiClient {
     required String path,
     Map<String, dynamic>? body,
     String? accessToken,
+    Map<String, String>? extraHeaders,
   }) async {
     final client = _httpClientFactory();
     try {
       final request = await client.openUrl(method, _uriFor(path));
       request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      extraHeaders?.forEach(request.headers.set);
 
       if (accessToken != null && accessToken.isNotEmpty) {
         request.headers.set(

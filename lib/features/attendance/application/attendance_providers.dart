@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointa_mobile/core/config/data_mode.dart';
 import 'package:pointa_mobile/core/network/pointa_api_client_provider.dart';
+import 'package:pointa_mobile/features/auth/data/session/mobile_installation_service.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_local_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_mock_data_source.dart';
 import 'package:pointa_mobile/features/attendance/data/datasources/attendance_remote_data_source.dart';
@@ -30,6 +31,7 @@ final attendanceRemoteDataSourceProvider = Provider<AttendanceRemoteDataSource>(
   (ref) {
     return AttendanceRemoteDataSource(
       apiClient: ref.watch(pointaApiClientProvider),
+      mobileInstallationService: ref.watch(mobileInstallationServiceProvider),
     );
   },
 );
