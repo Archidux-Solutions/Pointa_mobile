@@ -5,6 +5,7 @@ import 'package:pointa_mobile/features/auth/application/auth_state.dart';
 import 'package:pointa_mobile/features/auth/data/session/persisted_auth_session_store.dart';
 import 'package:pointa_mobile/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
+import 'package:pointa_mobile/features/auth/domain/models/password_reset_challenge.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
@@ -126,11 +127,17 @@ class AuthController extends Notifier<AuthState> {
     }
   }
 
-  Future<String> requestPasswordReset({required String phone}) async {
+  Future<PasswordResetChallenge> requestPasswordReset({
+    required String phone,
+    String channel = 'auto',
+  }) async {
     final repository = ref.read(authRepositoryProvider);
 
     try {
-      return await repository.requestPasswordReset(phone: phone);
+      return await repository.requestPasswordReset(
+        phone: phone,
+        channel: channel,
+      );
     } on AuthException {
       rethrow;
     } catch (_) {
@@ -139,18 +146,42 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> resetPassword({
-    required String token,
+    required String requestId,
+    required String verificationCode,
     required String newPassword,
   }) async {
     final repository = ref.read(authRepositoryProvider);
 
     try {
-      await repository.resetPassword(token: token, newPassword: newPassword);
+      await repository.resetPassword(
+        requestId: requestId,
+        verificationCode: verificationCode,
+        newPassword: newPassword,
+      );
     } on AuthException {
       rethrow;
     } catch (_) {
       throw const AuthException('Reinitialisation impossible. Reessayez.');
     }
+  }
+
+  Future<void> deleteAccount({required String currentPassword}) async {
+    final repository = ref.read(authRepositoryProvider);
+
+    try {
+      await repository.deleteAccount(currentPassword: currentPassword);
+    } on AuthException {
+      rethrow;
+    } catch (_) {
+      throw const AuthException('Suppression du compte impossible. Reessayez.');
+    }
+
+    await _clearPersistedSession();
+    state = AuthState.initial().copyWith(
+      isRestoring: false,
+      isLocked: false,
+      errorMessage: 'Compte supprime. Reconnectez-vous si necessaire.',
+    );
   }
 
   Future<void> signOut() async {

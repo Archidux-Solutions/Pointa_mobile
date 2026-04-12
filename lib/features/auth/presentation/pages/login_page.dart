@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
+import 'package:pointa_mobile/features/legal/legal_documents.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -329,6 +330,56 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   height: compact ? 54 : 58,
                                   onPressed: _submit,
                                 ),
+                                SizedBox(height: compact ? 16 : 18),
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 10,
+                                  runSpacing: 2,
+                                  children: <Widget>[
+                                    TextButton(
+                                      key: const Key('login_terms_button'),
+                                      onPressed: () {
+                                        showLegalDocumentSheet(
+                                          context,
+                                          document: termsOfUseDocument,
+                                        );
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(
+                                          0xFF6D73E7,
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Conditions d\'utilisation',
+                                      ),
+                                    ),
+                                    TextButton(
+                                      key: const Key('login_privacy_button'),
+                                      onPressed: () {
+                                        showLegalDocumentSheet(
+                                          context,
+                                          document: privacyPolicyDocument,
+                                        );
+                                      },
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: const Color(
+                                          0xFF6D73E7,
+                                        ),
+                                        textStyle: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Politique de confidentialite',
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
@@ -359,15 +410,19 @@ class _ForgotPasswordSheet extends ConsumerStatefulWidget {
 
 class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
   late final TextEditingController _phoneController;
+  final TextEditingController _verificationCodeController =
+      TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
-  String? _resetToken;
+  String? _requestId;
+  String _selectedChannel = 'sms';
+  String? _challengeMessage;
   String? _errorMessage;
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  bool get _isResetStep => _resetToken != null;
+  bool get _isResetStep => _requestId != null;
 
   @override
   void initState() {
@@ -378,6 +433,7 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
   @override
   void dispose() {
     _phoneController.dispose();
+    _verificationCodeController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
     super.dispose();
@@ -398,16 +454,21 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
     });
 
     try {
-      final token = await ref
+      final challenge = await ref
           .read(authControllerProvider.notifier)
-          .requestPasswordReset(phone: phone);
+          .requestPasswordReset(
+            phone: phone,
+            channel: _selectedChannel,
+          );
 
       if (!mounted) {
         return;
       }
 
       setState(() {
-        _resetToken = token;
+        _requestId = challenge.requestId;
+        _challengeMessage = challenge.message;
+        _verificationCodeController.text = challenge.verificationCode ?? '';
         _isLoading = false;
       });
     } on AuthException catch (error) {
@@ -422,10 +483,13 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
   }
 
   Future<void> _submitNewPassword() async {
+    final verificationCode = _verificationCodeController.text.trim();
     final newPassword = _passwordController.text.trim();
     final confirmPassword = _confirmController.text.trim();
 
-    if (newPassword.isEmpty || confirmPassword.isEmpty) {
+    if (verificationCode.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
       setState(() {
         _errorMessage = 'Renseignez tous les champs.';
       });
@@ -446,10 +510,10 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
       return;
     }
 
-    final token = _resetToken;
-    if (token == null || token.isEmpty) {
+    final requestId = _requestId;
+    if (requestId == null || requestId.isEmpty) {
       setState(() {
-        _errorMessage = 'Token de reinitialisation introuvable.';
+        _errorMessage = 'Session de reinitialisation introuvable.';
       });
       return;
     }
@@ -462,7 +526,11 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
     try {
       await ref
           .read(authControllerProvider.notifier)
-          .resetPassword(token: token, newPassword: newPassword);
+          .resetPassword(
+            requestId: requestId,
+            verificationCode: verificationCode,
+            newPassword: newPassword,
+          );
 
       if (!mounted) {
         return;
@@ -518,8 +586,12 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
             const SizedBox(height: 10),
             Text(
               _isResetStep
-                  ? 'Definissez un nouveau mot de passe pour votre compte.'
-                  : 'Saisissez votre numero pour lancer la reinitialisation.',
+                  ? (_challengeMessage?.trim().isNotEmpty ?? false)
+                        ? _challengeMessage!
+                        : _selectedChannel == 'sms'
+                        ? 'Saisissez le code recu par SMS puis definissez votre nouveau mot de passe.'
+                        : 'Saisissez le code recu par e-mail puis definissez votre nouveau mot de passe.'
+                  : 'Saisissez votre numero puis choisissez comment recevoir le code.',
               style: const TextStyle(
                 color: Color(0xFF8F89B8),
                 fontSize: 14,
@@ -529,6 +601,42 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
             ),
             const SizedBox(height: 18),
             if (!_isResetStep) ...<Widget>[
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE2DBFF)),
+                ),
+                padding: const EdgeInsets.all(6),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _ForgotChannelButton(
+                        label: 'Recevoir par SMS',
+                        isActive: _selectedChannel == 'sms',
+                        onTap: () {
+                          setState(() {
+                            _selectedChannel = 'sms';
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: _ForgotChannelButton(
+                        label: 'Recevoir par e-mail',
+                        isActive: _selectedChannel == 'email',
+                        onTap: () {
+                          setState(() {
+                            _selectedChannel = 'email';
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
               _ForgotField(
                 key: const Key('forgot_phone_field'),
                 controller: _phoneController,
@@ -537,6 +645,14 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
                 keyboardType: TextInputType.phone,
               ),
             ] else ...<Widget>[
+              _ForgotField(
+                key: const Key('forgot_code_field'),
+                controller: _verificationCodeController,
+                label: 'Code de verification',
+                icon: Icons.password_rounded,
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 14),
               _ForgotField(
                 key: const Key('forgot_new_password_field'),
                 controller: _passwordController,
@@ -709,6 +825,57 @@ class _ForgotField extends StatelessWidget {
   }
 }
 
+class _ForgotChannelButton extends StatelessWidget {
+  const _ForgotChannelButton({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: isActive ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: isActive
+                ? const <BoxShadow>[
+                    BoxShadow(
+                      color: Color(0x140F172A),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isActive
+                  ? const Color(0xFF1A2550)
+                  : const Color(0xFF8F89B8),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _PointaBrand extends StatelessWidget {
   const _PointaBrand({required this.logoSize, required this.textSize});
 
@@ -757,7 +924,7 @@ class _PointaBrand extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'PointA',
+          'Pointa',
           style: TextStyle(
             fontSize: textSize,
             fontWeight: FontWeight.w700,

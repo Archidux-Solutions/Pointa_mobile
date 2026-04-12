@@ -591,7 +591,7 @@ class _PointaBrand extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'PointA',
+          'Pointa',
           style: TextStyle(
             fontSize: textSize,
             fontWeight: FontWeight.w700,

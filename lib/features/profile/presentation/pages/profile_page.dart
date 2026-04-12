@@ -7,6 +7,7 @@ import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
+import 'package:pointa_mobile/features/legal/legal_documents.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -323,6 +324,115 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
+  Future<void> _openDeleteAccountSheet() async {
+    final passwordController = TextEditingController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFF7F5FB),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  'Supprimer le compte',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1A2550),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Cette action desactive le compte courant. Si le compte est proprietaire d une entreprise, la suppression sera refusee.',
+                  style: TextStyle(
+                    color: Color(0xFF8F89B8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _ProfileField(
+                  controller: passwordController,
+                  label: 'Mot de passe actuel',
+                  icon: Icons.lock_outline_rounded,
+                  obscureText: true,
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    key: const Key('profile_delete_account_submit_button'),
+                    onPressed: () async {
+                      final password = passwordController.text.trim();
+                      if (password.isEmpty) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Renseignez votre mot de passe actuel.'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(this.context);
+
+                      try {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .deleteAccount(currentPassword: password);
+                        if (!mounted) {
+                          return;
+                        }
+                        navigator.pop();
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Compte desactive avec succes.'),
+                          ),
+                        );
+                      } on AuthException catch (error) {
+                        if (!mounted) {
+                          return;
+                        }
+                        messenger.showSnackBar(
+                          SnackBar(content: Text(error.message)),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFCC4B4B),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text('Confirmer la suppression'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    passwordController.dispose();
+  }
+
   Future<void> _signOut() async {
     await ref.read(authControllerProvider.notifier).signOut();
   }
@@ -391,6 +501,37 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 icon: Icons.lock_outline_rounded,
                 label: 'Changer le mot de passe',
                 onTap: _openPasswordSheet,
+              ),
+              const SizedBox(height: 14),
+              _ActionTile(
+                key: const Key('profile_terms_button'),
+                icon: Icons.gavel_rounded,
+                label: 'Conditions d\'utilisation',
+                onTap: () {
+                  showLegalDocumentSheet(
+                    context,
+                    document: termsOfUseDocument,
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              _ActionTile(
+                key: const Key('profile_privacy_button'),
+                icon: Icons.shield_outlined,
+                label: 'Politique de confidentialite',
+                onTap: () {
+                  showLegalDocumentSheet(
+                    context,
+                    document: privacyPolicyDocument,
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              _ActionTile(
+                key: const Key('profile_delete_account_button'),
+                icon: Icons.delete_outline_rounded,
+                label: 'Supprimer mon compte',
+                onTap: _openDeleteAccountSheet,
               ),
               const SizedBox(height: 14),
               SizedBox(

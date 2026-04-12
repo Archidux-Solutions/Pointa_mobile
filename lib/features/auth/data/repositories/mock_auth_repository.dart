@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
+import 'package:pointa_mobile/features/auth/domain/models/password_reset_challenge.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
 import 'package:pointa_mobile/features/auth/domain/repositories/auth_repository.dart';
 
@@ -85,25 +86,52 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<String> requestPasswordReset({required String phone}) async {
+  Future<PasswordResetChallenge> requestPasswordReset({
+    required String phone,
+    String channel = 'auto',
+  }) async {
     await Future<void>.delayed(const Duration(milliseconds: 220));
 
     if (phone.trim().isEmpty) {
       throw const AuthException('Renseignez votre numero de telephone.');
     }
 
-    return 'mock-reset-token';
+    final normalizedChannel = channel.trim().toLowerCase();
+    final message = switch (normalizedChannel) {
+      'sms' => 'Si un compte existe, un code a ete envoye par SMS.',
+      'email' => 'Si un compte existe, un code a ete envoye par e-mail.',
+      _ => 'Si un compte existe, un code de reinitialisation a ete emis.',
+    };
+
+    return PasswordResetChallenge(
+      requestId: 'mock-reset-request',
+      verificationCode: '123456',
+      expiresInSeconds: 600,
+      message: message,
+    );
   }
 
   @override
   Future<void> resetPassword({
-    required String token,
+    required String requestId,
+    required String verificationCode,
     required String newPassword,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 220));
 
-    if (token.trim().isEmpty || newPassword.trim().isEmpty) {
+    if (requestId.trim().isEmpty ||
+        verificationCode.trim().isEmpty ||
+        newPassword.trim().isEmpty) {
       throw const AuthException('Impossible de reinitialiser le mot de passe.');
+    }
+  }
+
+  @override
+  Future<void> deleteAccount({required String currentPassword}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+
+    if (currentPassword.trim().isEmpty) {
+      throw const AuthException('Renseignez votre mot de passe actuel.');
     }
   }
 
