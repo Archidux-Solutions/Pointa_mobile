@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:pointa_mobile/core/phone/phone_number_utils.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/password_reset_challenge.dart';
 import 'package:pointa_mobile/features/auth/domain/models/user_session.dart';
@@ -14,16 +15,17 @@ class MockAuthRepository implements AuthRepository {
     required String password,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 350));
+    final normalizedPhone = normalizeStoredPhoneNumber(phone);
 
-    if (phone.trim().isEmpty || password.trim().isEmpty) {
+    if (normalizedPhone.isEmpty || password.trim().isEmpty) {
       throw const AuthException('Telephone et mot de passe obligatoires.');
     }
 
     return UserSession(
       userId: 'mock-user-001',
       displayName: 'Membre Pointa',
-      email: '${phone.trim()}@pointa.app',
-      phoneNumber: phone.trim(),
+      email: '$normalizedPhone@pointa.app',
+      phoneNumber: normalizedPhone,
     );
   }
 
@@ -46,10 +48,11 @@ class MockAuthRepository implements AuthRepository {
     required String phone,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 220));
+    final normalizedPhone = normalizeStoredPhoneNumber(phone);
 
     if (fullName.trim().isEmpty ||
         email.trim().isEmpty ||
-        phone.trim().isEmpty) {
+        normalizedPhone.isEmpty) {
       throw const AuthException('Tous les champs du profil sont obligatoires.');
     }
 
@@ -57,7 +60,7 @@ class MockAuthRepository implements AuthRepository {
       userId: 'mock-user-001',
       displayName: fullName.trim(),
       email: email.trim(),
-      phoneNumber: phone.trim(),
+      phoneNumber: normalizedPhone,
     );
   }
 
@@ -68,7 +71,7 @@ class MockAuthRepository implements AuthRepository {
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 220));
 
-    if (phone.trim().isEmpty) {
+    if (normalizeStoredPhoneNumber(phone).isEmpty) {
       throw const AuthException('Renseignez votre numero de telephone.');
     }
 

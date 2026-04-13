@@ -167,7 +167,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('profile_edit_button')), findsOneWidget);
-      expect(find.text('+22670000000'), findsWidgets);
+      expect(find.text('+226 70 00 00 00'), findsWidgets);
       final signOutButton = tester.widget<OutlinedButton>(
         find.byKey(const Key('profile_sign_out_button')),
       );

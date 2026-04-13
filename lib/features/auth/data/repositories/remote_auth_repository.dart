@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:pointa_mobile/core/network/api_exception.dart';
 import 'package:pointa_mobile/core/network/api_session_store.dart';
 import 'package:pointa_mobile/core/network/pointa_api_client.dart';
+import 'package:pointa_mobile/core/phone/phone_number_utils.dart';
 import 'package:pointa_mobile/features/auth/data/session/mobile_installation_service.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/auth/domain/models/password_reset_challenge.dart';
@@ -27,13 +28,14 @@ class RemoteAuthRepository implements AuthRepository {
     required String phone,
     required String password,
   }) async {
+    final normalizedPhone = normalizeStoredPhoneNumber(phone);
     try {
       final deviceIdentity = await _mobileInstallationService.getIdentity();
       final payload = await _apiClient.sendJson(
         method: 'POST',
         path: '/api/auth/login/',
         body: <String, dynamic>{
-          'phone': phone.trim(),
+          'phone': normalizedPhone,
           'password': password,
           'device_installation_id': deviceIdentity.installationId,
           'device_platform': deviceIdentity.platform,
@@ -49,7 +51,7 @@ class RemoteAuthRepository implements AuthRepository {
         refreshToken: refreshToken,
       );
 
-      return _fetchSession(fallbackPhone: phone.trim(), userId: userId);
+      return _fetchSession(fallbackPhone: normalizedPhone, userId: userId);
     } on ApiException catch (error) {
       _sessionStore.clear();
       throw AuthException(error.message);
@@ -86,6 +88,7 @@ class RemoteAuthRepository implements AuthRepository {
     required String email,
     required String phone,
   }) async {
+    final normalizedPhone = normalizeStoredPhoneNumber(phone);
     if (_sessionStore.accessToken == null) {
       throw const AuthException('Session expiree. Reconnectez-vous.');
     }
@@ -99,7 +102,7 @@ class RemoteAuthRepository implements AuthRepository {
           'first_name': name.firstName,
           'last_name': name.lastName,
           'email': email.trim(),
-          'phone': phone.trim(),
+          'phone': normalizedPhone,
         },
         authenticated: true,
       );
@@ -127,7 +130,7 @@ class RemoteAuthRepository implements AuthRepository {
         userId: userId,
         displayName: displayName.isEmpty ? fullName.trim() : displayName,
         email: (payload['email'] as String?)?.trim() ?? email.trim(),
-        phoneNumber: (payload['phone'] as String?)?.trim() ?? phone.trim(),
+        phoneNumber: (payload['phone'] as String?)?.trim() ?? normalizedPhone,
       );
     } on ApiException catch (error) {
       throw AuthException(error.message);
@@ -139,12 +142,13 @@ class RemoteAuthRepository implements AuthRepository {
     required String phone,
     String channel = 'auto',
   }) async {
+    final normalizedPhone = normalizeStoredPhoneNumber(phone);
     try {
       final payload = await _apiClient.sendJson(
         method: 'POST',
         path: '/api/auth/forgot-password/',
         body: <String, dynamic>{
-          'phone': phone.trim(),
+          'phone': normalizedPhone,
           'channel': channel.trim(),
         },
       );

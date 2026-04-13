@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pointa_mobile/app/router/app_router.dart';
+import 'package:pointa_mobile/core/phone/phone_number_utils.dart';
 import 'package:pointa_mobile/core/widgets/app_bottom_nav.dart';
 import 'package:pointa_mobile/core/widgets/app_page_bars.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
@@ -36,7 +37,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   String _phoneNumber(UserSession? session) {
     final value = session?.phoneNumber?.trim();
     if (value != null && value.isNotEmpty) {
-      return value;
+      return formatPhoneNumberDisplay(value);
     }
     return '+226 70 12 34 56';
   }
@@ -94,101 +95,159 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   Future<void> _openEditProfileSheet(UserSession? session) async {
     final nameController = TextEditingController(text: _displayName(session));
     final emailController = TextEditingController(text: _email(session));
-    final phoneController = TextEditingController(text: _phoneNumber(session));
+    final phoneInput = splitPhoneNumber(session?.phoneNumber?.trim() ?? '');
+    final phoneController = TextEditingController(text: phoneInput.localNumber);
+    var selectedDialCode = phoneInput.dialCode;
 
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F5FB),
-              borderRadius: BorderRadius.circular(28),
+        return StatefulBuilder(
+          builder: (context, setModalState) => Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
             ),
-            padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Editer le profil',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1A2550),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF7F5FB),
+                borderRadius: BorderRadius.circular(28),
+              ),
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Editer le profil',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1A2550),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                _ProfileField(
-                  controller: nameController,
-                  label: 'Nom complet',
-                  icon: Icons.person_outline_rounded,
-                ),
-                const SizedBox(height: 14),
-                _ProfileField(
-                  controller: emailController,
-                  label: 'Adresse e-mail',
-                  icon: Icons.mail_outline_rounded,
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 14),
-                _ProfileField(
-                  controller: phoneController,
-                  label: 'Telephone',
-                  icon: Icons.call_outlined,
-                  keyboardType: TextInputType.phone,
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    key: const Key('profile_save_button'),
-                    onPressed: () async {
-                      final navigator = Navigator.of(context);
-                      final messenger = ScaffoldMessenger.of(this.context);
-
-                      try {
-                        await ref
-                            .read(authControllerProvider.notifier)
-                            .updateProfile(
-                              displayName: nameController.text,
-                              email: emailController.text,
-                              phoneNumber: phoneController.text,
-                            );
-                        if (!mounted) {
-                          return;
-                        }
-                        navigator.pop();
-                        messenger.showSnackBar(
-                          const SnackBar(content: Text('Profil mis a jour.')),
-                        );
-                      } on AuthException catch (error) {
-                        if (!mounted) {
-                          return;
-                        }
-                        messenger.showSnackBar(
-                          SnackBar(content: Text(error.message)),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5A7DF5),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+                  const SizedBox(height: 18),
+                  _ProfileField(
+                    controller: nameController,
+                    label: 'Nom complet',
+                    icon: Icons.person_outline_rounded,
+                  ),
+                  const SizedBox(height: 14),
+                  _ProfileField(
+                    controller: emailController,
+                    label: 'Adresse e-mail',
+                    icon: Icons.mail_outline_rounded,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 14),
+                  _ProfileField(
+                    controller: phoneController,
+                    label: 'Numero local',
+                    icon: Icons.call_outlined,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey<String>(selectedDialCode),
+                    initialValue: selectedDialCode,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: 'Indicatif',
+                      prefixIcon: const Icon(Icons.public_rounded),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: const BorderSide(color: Color(0xFFDDE1EE)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: const BorderSide(color: Color(0xFFDDE1EE)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        borderSide: const BorderSide(color: Color(0xFF6A84F5)),
                       ),
                     ),
-                    child: const Text('Enregistrer'),
+                    selectedItemBuilder: (context) => supportedPhoneCountries
+                        .map(
+                          (option) => Text(
+                            option.dialCode,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        )
+                        .toList(),
+                    items: supportedPhoneCountries
+                        .map(
+                          (option) => DropdownMenuItem<String>(
+                            value: option.dialCode,
+                            child: Text(
+                              '${option.country} (${option.dialCode})',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value == null) {
+                        return;
+                      }
+                      setModalState(() {
+                        selectedDialCode = value;
+                      });
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      key: const Key('profile_save_button'),
+                      onPressed: () async {
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(this.context);
+
+                        try {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .updateProfile(
+                                displayName: nameController.text,
+                                email: emailController.text,
+                                phoneNumber: buildPhoneNumber(
+                                  selectedDialCode,
+                                  phoneController.text,
+                                ),
+                              );
+                          if (!mounted) {
+                            return;
+                          }
+                          navigator.pop();
+                          messenger.showSnackBar(
+                            const SnackBar(content: Text('Profil mis a jour.')),
+                          );
+                        } on AuthException catch (error) {
+                          if (!mounted) {
+                            return;
+                          }
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(error.message)),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5A7DF5),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const Text('Enregistrer'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pointa_mobile/core/phone/phone_number_utils.dart';
 import 'package:pointa_mobile/features/auth/application/auth_controller.dart';
 import 'package:pointa_mobile/features/auth/domain/exceptions/auth_exception.dart';
 import 'package:pointa_mobile/features/legal/legal_documents.dart';
@@ -15,6 +16,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _phoneController;
   late final TextEditingController _passwordController;
+  var _selectedDialCode = defaultPhoneDialCode;
   var _obscurePassword = true;
 
   @override
@@ -42,7 +44,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     await ref
         .read(authControllerProvider.notifier)
         .signIn(
-          phone: _phoneController.text,
+          phone: buildPhoneNumber(_selectedDialCode, _phoneController.text),
           password: _passwordController.text,
         );
   }
@@ -54,7 +56,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return _ForgotPasswordSheet(initialPhone: _phoneController.text);
+        return _ForgotPasswordSheet(
+          initialPhone: buildPhoneNumber(_selectedDialCode, _phoneController.text),
+        );
       },
     );
   }
@@ -242,17 +246,62 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                   ),
                                   decoration: _inputDecoration(
                                     compact: compact,
-                                    hintText: 'Numero de telephone',
+                                    hintText: 'Numero local',
                                     prefixIcon: Icons.call_outlined,
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.trim().isEmpty) {
+                                    final normalizedPhone = buildPhoneNumber(
+                                      _selectedDialCode,
+                                      value ?? '',
+                                    );
+                                    if (normalizedPhone.isEmpty) {
                                       return 'Veuillez saisir un numero.';
                                     }
                                     return null;
                                   },
                                   onChanged: (_) {
                                     ref.read(authControllerProvider.notifier).clearError();
+                                  },
+                                ),
+                                SizedBox(height: compact ? 10 : 12),
+                                DropdownButtonFormField<String>(
+                                  key: ValueKey<String>(_selectedDialCode),
+                                  initialValue: _selectedDialCode,
+                                  isExpanded: true,
+                                  decoration: _inputDecoration(
+                                    compact: compact,
+                                    hintText: 'Indicatif',
+                                    prefixIcon: Icons.public_rounded,
+                                  ),
+                                  selectedItemBuilder: (context) => supportedPhoneCountries
+                                      .map(
+                                        (option) => Text(
+                                          option.dialCode,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      )
+                                      .toList(),
+                                  items: supportedPhoneCountries
+                                      .map(
+                                        (option) => DropdownMenuItem<String>(
+                                          value: option.dialCode,
+                                          child: Text(
+                                            '${option.country} (${option.dialCode})',
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value == null) {
+                                      return;
+                                    }
+                                    setState(() {
+                                      _selectedDialCode = value;
+                                    });
+                                    ref
+                                        .read(authControllerProvider.notifier)
+                                        .clearError();
                                   },
                                 ),
                                 SizedBox(height: fieldGap),
@@ -424,6 +473,7 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
       TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+  var _selectedDialCode = defaultPhoneDialCode;
   String? _requestId;
   String _selectedChannel = 'sms';
   String? _challengeMessage;
@@ -437,7 +487,9 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
   @override
   void initState() {
     super.initState();
-    _phoneController = TextEditingController(text: widget.initialPhone.trim());
+    final initialPhone = splitPhoneNumber(widget.initialPhone.trim());
+    _selectedDialCode = initialPhone.dialCode;
+    _phoneController = TextEditingController(text: initialPhone.localNumber);
   }
 
   @override
@@ -450,7 +502,7 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
   }
 
   Future<void> _requestResetToken() async {
-    final phone = _phoneController.text.trim();
+    final phone = buildPhoneNumber(_selectedDialCode, _phoneController.text);
     if (phone.isEmpty) {
       setState(() {
         _errorMessage = 'Renseignez votre numero de telephone.';
@@ -650,9 +702,73 @@ class _ForgotPasswordSheetState extends ConsumerState<_ForgotPasswordSheet> {
               _ForgotField(
                 key: const Key('forgot_phone_field'),
                 controller: _phoneController,
-                label: 'Numero de telephone',
+                label: 'Numero local',
                 icon: Icons.call_outlined,
                 keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 14),
+              DropdownButtonFormField<String>(
+                key: ValueKey<String>(_selectedDialCode),
+                initialValue: _selectedDialCode,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  labelText: 'Indicatif',
+                  prefixIcon: const Icon(
+                    Icons.public_rounded,
+                    color: Color(0xFFA09ACD),
+                    size: 22,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.9),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 18,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: const BorderSide(color: Color(0xFFE2DBFF)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide(
+                      color: const Color(0xFFE2DBFF).withValues(alpha: 0.9),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF7E88FF),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                selectedItemBuilder: (context) => supportedPhoneCountries
+                    .map(
+                      (option) => Text(
+                        option.dialCode,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                    .toList(),
+                items: supportedPhoneCountries
+                    .map(
+                      (option) => DropdownMenuItem<String>(
+                        value: option.dialCode,
+                        child: Text(
+                          '${option.country} (${option.dialCode})',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) {
+                    return;
+                  }
+                  setState(() {
+                    _selectedDialCode = value;
+                  });
+                },
               ),
             ] else ...<Widget>[
               _ForgotField(
