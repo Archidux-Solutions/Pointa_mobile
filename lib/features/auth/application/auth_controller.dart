@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pointa_mobile/core/network/pointa_api_client_provider.dart';
+import 'package:pointa_mobile/features/attendance/application/attendance_providers.dart';
 import 'package:pointa_mobile/features/auth/application/device_unlock_service.dart';
 import 'package:pointa_mobile/features/auth/application/auth_state.dart';
 import 'package:pointa_mobile/features/auth/data/session/persisted_auth_session_store.dart';
@@ -27,6 +28,7 @@ class AuthController extends Notifier<AuthState> {
   Future<void> signIn({required String phone, required String password}) async {
     final repository = ref.read(authRepositoryProvider);
     state = state.copyWith(isLoading: true, resetError: true);
+    _resetSessionScopedState();
 
     try {
       final session = await repository.signIn(phone: phone, password: password);
@@ -57,53 +59,6 @@ class AuthController extends Notifier<AuthState> {
         isLoading: false,
         resetSession: true,
         errorMessage: 'Connexion backend impossible. Reessayez.',
-      );
-    }
-  }
-
-  Future<void> register({
-    required String fullName,
-    required String phone,
-    required String email,
-    required String password,
-  }) async {
-    final repository = ref.read(authRepositoryProvider);
-    state = state.copyWith(isLoading: true, resetError: true);
-
-    try {
-      final session = await repository.register(
-        fullName: fullName,
-        phone: phone,
-        email: email,
-        password: password,
-      );
-      await _persistCurrentSession(session);
-      state = state.copyWith(
-        status: AuthStatus.authenticated,
-        session: session,
-        isRestoring: false,
-        isLocked: false,
-        isLoading: false,
-      );
-    } on AuthException catch (error) {
-      await _clearPersistedSession();
-      state = state.copyWith(
-        status: AuthStatus.unauthenticated,
-        isRestoring: false,
-        isLocked: false,
-        isLoading: false,
-        resetSession: true,
-        errorMessage: error.message,
-      );
-    } catch (_) {
-      await _clearPersistedSession();
-      state = state.copyWith(
-        status: AuthStatus.unauthenticated,
-        isRestoring: false,
-        isLocked: false,
-        isLoading: false,
-        resetSession: true,
-        errorMessage: 'Inscription backend impossible. Reessayez.',
       );
     }
   }
@@ -271,6 +226,10 @@ class AuthController extends Notifier<AuthState> {
     );
   }
 
+  void clearError() {
+    state = state.copyWith(resetError: true);
+  }
+
   Future<void> _restorePersistedSession() async {
     try {
       final persistedStore = ref.read(persistedAuthSessionStoreProvider);
@@ -337,5 +296,16 @@ class AuthController extends Notifier<AuthState> {
     } catch (_) {
       // Ignore local storage cleanup failures to preserve sign-out resilience.
     }
+    _resetSessionScopedState();
+  }
+
+  void _resetSessionScopedState() {
+    ref.read(attendanceLocalDataSourceProvider).clear();
+    ref.read(attendanceSyncQueueDataSourceProvider).clear();
+    ref.invalidate(attendanceRepositoryProvider);
+    ref.invalidate(attendanceStatusProvider);
+    ref.invalidate(attendanceHistoryProvider);
+    ref.invalidate(attendanceSummaryProvider);
+    ref.invalidate(attendancePendingSyncCountProvider);
   }
 }

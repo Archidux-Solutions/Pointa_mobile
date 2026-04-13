@@ -17,4 +17,8 @@ class AttendanceSyncQueueDataSource {
   void removeById(String id) {
     _queue.removeWhere((entry) => entry.id == id);
   }
+
+  void clear() {
+    _queue.clear();
+  }
 }

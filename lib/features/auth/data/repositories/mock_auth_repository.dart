@@ -28,30 +28,6 @@ class MockAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserSession> register({
-    required String fullName,
-    required String phone,
-    required String email,
-    required String password,
-  }) async {
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-
-    if (fullName.trim().isEmpty ||
-        phone.trim().isEmpty ||
-        email.trim().isEmpty ||
-        password.trim().isEmpty) {
-      throw const AuthException('Tous les champs sont obligatoires.');
-    }
-
-    return UserSession(
-      userId: 'mock-user-001',
-      displayName: fullName.trim(),
-      email: email.trim(),
-      phoneNumber: phone.trim(),
-    );
-  }
-
-  @override
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,

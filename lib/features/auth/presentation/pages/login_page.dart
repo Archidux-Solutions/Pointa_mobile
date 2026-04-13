@@ -22,6 +22,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.initState();
     _phoneController = TextEditingController();
     _passwordController = TextEditingController();
+    Future<void>.microtask(
+      () => ref.read(authControllerProvider.notifier).clearError(),
+    );
   }
 
   @override
@@ -45,6 +48,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _openForgotPasswordSheet() async {
+    ref.read(authControllerProvider.notifier).clearError();
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -247,6 +251,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     }
                                     return null;
                                   },
+                                  onChanged: (_) {
+                                    ref.read(authControllerProvider.notifier).clearError();
+                                  },
                                 ),
                                 SizedBox(height: fieldGap),
                                 TextFormField(
@@ -281,6 +288,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                       return 'Veuillez saisir un mot de passe.';
                                     }
                                     return null;
+                                  },
+                                  onChanged: (_) {
+                                    ref.read(authControllerProvider.notifier).clearError();
                                   },
                                   onFieldSubmitted: (_) {
                                     _submit();

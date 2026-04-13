@@ -18,6 +18,10 @@ class AttendanceLocalDataSource {
     _records.insert(0, record);
   }
 
+  void clear() {
+    _records.clear();
+  }
+
   void replaceRecordById({
     required String id,
     required AttendanceRecord record,

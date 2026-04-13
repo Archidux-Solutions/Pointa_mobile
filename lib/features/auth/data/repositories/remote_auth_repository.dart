@@ -57,33 +57,6 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<UserSession> register({
-    required String fullName,
-    required String phone,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final name = _splitName(fullName);
-      await _apiClient.sendJson(
-        method: 'POST',
-        path: '/api/auth/register/',
-        body: <String, dynamic>{
-          'phone': phone.trim(),
-          'email': email.trim(),
-          'first_name': name.firstName,
-          'last_name': name.lastName,
-          'password': password,
-        },
-      );
-
-      return signIn(phone: phone, password: password);
-    } on ApiException catch (error) {
-      throw AuthException(error.message);
-    }
-  }
-
-  @override
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
